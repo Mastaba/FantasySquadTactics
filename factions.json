@@ -1,0 +1,324 @@
+{
+  "factions": [
+    {
+      "name": "Kingdom of Cantrell",
+      "races": ["Humans"],
+      "territory": "The Western Spires",
+      "ruler": "King Arcturus",
+      "units": [
+        {
+          "name": "Page",
+          "unit_class": "Scout",
+          "hp": 5,
+          "move": 4,
+          "range": 1,
+          "atk": 1,
+          "special": "Spotter - Friendly units within a range of 4 have their effective range increased by 1."
+        },
+        {
+          "name": "Archer",
+          "unit_class": "Ranger",
+          "hp": 6,
+          "move": 3,
+          "range": 3,
+          "atk": 3,
+          "special": "Double tap - On successful hit, archer may make extra attack for 1 damage against another unit in range."
+        },
+        {
+          "name": "Footman",
+          "unit_class": "Melee",
+          "hp": 10,
+          "move": 3,
+          "range": 1,
+          "atk": 3,
+          "special": "Sword & Board - If the footman doesn’t move this turn, the first point of damage he takes on the next turn is negated."
+        },
+        {
+          "name": "Knight",
+          "unit_class": "Heavy",
+          "hp": 15,
+          "move": 2,
+          "range": 1,
+          "atk": 3,
+          "special": "Trusty Steed - If the knight doesn’t attack this round, it has +1 to its move attribute."
+        },
+        {
+          "name": "Trebuchet",
+          "unit_class": "Artillery",
+          "hp": 10,
+          "move": 1,
+          "range": 4,
+          "atk": 4,
+          "special": "All She’s Got - The trebuchet’s shot this round is at +1 range, but this piece cannot move or attack next turn."
+        },
+        {
+          "name": "King Arcturus",
+          "unit_class": "Leader",
+          "hp": 18,
+          "move": 3,
+          "range": 1,
+          "atk": 4,
+          "special": "For the King! - Once per turn, King Arcturus can target a friendly unit within 4 squares and grant it an additional MOVE action equal to its base MOVE value. If this unit engages in melee combat during this turn, it gains a +2 ATK bonus for its first attack."
+        },
+        {
+          "name": "Lady Elise, Master Tactician",
+          "unit_class": "Leader",
+          "hp": 14,
+          "move": 3,
+          "range": 3,
+          "atk": 3,
+          "special": "Strategic Savant - Once per turn, Lady Elise can grant an additional attack action to a friendly unit within 4 squares. If that unit successfully defeats an enemy unit with this action, it may immediately move up to its MOVE value."
+        },
+        {
+          "name": "Sir Gideon, Captain of the Guard",
+          "unit_class": "Leader",
+          "hp": 20,
+          "move": 3,
+          "range": 1,
+          "atk": 5,
+          "special": "Vigilance - Once per turn, in place of his move and attack, Sir Gideon projects an aura of vigilance in a 2-square radius around him. All friendly units within this aura gain 'First Strike' for their next turn. 'First Strike' allows a unit to counterattack with a range of 1 the first time it is attacked during the enemy's turn, dealing its regular attack damage to the attacking enemy unit to a max of 3."
+        }
+      ]
+    },
+    {
+      "name": "Fae Armies of the Forest Lords",
+      "races": ["Fae Creatures", "Treants"],
+      "territory": "Isles of Mist",
+      "ruler": "Queen Elara",
+      "units": [
+        {
+          "name": "Satyr",
+          "unit_class": "Scout",
+          "hp": 3,
+          "move": 5,
+          "range": 2,
+          "atk": 1,
+          "special": "Lure - In place of attack, the satyr lures his opponent with a magical flute. Opponents within 5 squares move two squares towards the satyr."
+        },
+        {
+          "name": "Wild Elf",
+          "unit_class": "Ranger",
+          "hp": 8,
+          "move": 3,
+          "range": 3,
+          "atk": 3,
+          "special": "Mobile Strike - In place of attack ranger may attack and move two extra tiles afterwards."
+        },
+        {
+          "name": "Fairy Swarm",
+          "unit_class": "Melee",
+          "hp": 12,
+          "move": 5,
+          "range": 1,
+          "atk": 3,
+          "special": "Flying: The fairy may fly over water but may not end their turn here. The Fairy swarm may move into any terrain type for only 1 move point."
+        },
+        {
+          "name": "Centaur",
+          "unit_class": "Heavy",
+          "hp": 10,
+          "move": 6,
+          "range": 2,
+          "atk": 3,
+          "special": "Trample: Once per turn in place of move, a centaur may travel up to its move value through an enemy unit, doing full attack damage. Turn must end on an open tile."
+        },
+        {
+          "name": "Forest Lord",
+          "unit_class": "Artillery",
+          "hp": 16,
+          "move": 2,
+          "range": 2,
+          "atk": 4,
+          "special": "Grab: In place of attack, the forest lord may grab an enemy 2 tiles away and pull them into melee range via the shortest path, causing 2 damage."
+        },
+        {
+          "name": "Elara, Queen of the Wilds",
+          "unit_class": "Leader",
+          "hp": 16,
+          "move": 4,
+          "range": 1,
+          "atk": 4,
+          "special": "Nature's Command - Once per turn, in place of her attack, Elara can give a friendly unit within 4 squares an additional move or attack action. If that unit is on a Forest terrain, it gains +1 ATK during this action."
+        },
+        {
+          "name": "Thalion, Ancient Treant Sage",
+          "unit_class": "Leader",
+          "hp": 20,
+          "move": 2,
+          "range": 2,
+          "atk": 5,
+          "special": "Roots of the Forest - Once per turn, in place of an attack, Thalion can immobilize an enemy unit within 4 squares by entangling it with roots. The affected unit cannot move or attack during their next turn."
+        },
+        {
+          "name": "Narae, Enchantress of the Glade",
+          "unit_class": "Leader",
+          "hp": 14,
+          "move": 4,
+          "range": 3,
+          "atk": 3,
+          "special": "Forest's Embrace - Once per turn, in place of an attack, Narae can heal a friendly unit within 4 squares for 4 HP. If the target is on a Forest terrain, they gain an additional 2 HP."
+        }
+      ]
+    },
+        {
+      "name": "Elven Alliance of Eldanor",
+      "races": ["Elves"],
+      "territory": "The Shimmering Glades",
+      "ruler": "Aerendil, High Prince of Eldanor",
+      "units": [
+        {
+          "name": "Woodland Ranger",
+          "unit_class": "Scout",
+          "hp": 5,
+          "move": 4,
+          "range": 1,
+          "atk": 1,
+          "special": "Shadowstep - In place of attack, the Woodland Scout may move an additional 3 squares, ignoring terrain movement costs."
+        },
+        {
+          "name": "Elven Archer",
+          "unit_class": "Ranger",
+          "hp": 7,
+          "move": 3,
+          "range": 4,
+          "atk": 3,
+          "special": "Volley - In place of attack, the Elven Archer may target up to 3 enemy units within range, dealing 1 damage to each."
+        },
+        {
+          "name": "Elven Swordsman",
+          "unit_class": "Melee",
+          "hp": 12,
+          "move": 3,
+          "range": 1,
+          "atk": 3,
+          "special": "Elusive Strike - After successfully attacking an enemy unit, the Elven Swordsman may move up to 2 squares."
+        },
+        {
+          "name": "Elven Guardian",
+          "unit_class": "Heavy",
+          "hp": 16,
+          "move": 2,
+          "range": 1,
+          "atk": 4,
+          "special": "Sentinel - In place of move, the Elven Guardian gains +2 to its effective attack range this turn."
+        },
+        {
+          "name": "Elven Mage",
+          "unit_class": "Artillery",
+          "hp": 10,
+          "move": 2,
+          "range": 4,
+          "atk": 4,
+          "special": "Elemental Bolt - In place of attack, the Elven Mage may target an enemy unit within range, dealing 4 damage and applying an elemental effect based on the target's terrain type."
+        },
+        {
+          "name": "Aerendil, High Prince of Eldanor",
+          "unit_class": "Leader",
+          "hp": 18,
+          "move": 4,
+          "range": 1,
+          "atk": 4,
+          "special": "Tactical Brilliance - Once per turn, Aerendil may swap the positions of two friendly units within 6 squares. If either unit is an Elven Archer or Elven Mage, they gain +1 ATK during their next attack."
+        },
+        {
+          "name": "Liriel, Priestess of the Moon",
+          "unit_class": "Leader",
+          "hp": 15,
+          "move": 3,
+          "range": 4,
+          "atk": 3,
+          "special": "Lunar Blessing - Once per turn, Liriel can target a friendly unit within 4 squares and grant it a shield that absorbs up to 3 damage for one turn. If the target is an Elven Guardian, they also gain +1 MOVE this turn."
+        },
+        {
+          "name": "Galdor, Master of Elements",
+          "unit_class": "Leader",
+          "hp": 14,
+          "move": 3,
+          "range": 4,
+          "atk": 4,
+          "special": "Elemental Mastery - Once per turn, in place of his attack, Galdor can target a friendly Elven Mage within 6 squares and grant it the ability to choose the elemental effect of its Elemental Bolt regardless of the target's terrain type."
+        }
+      ]
+    },
+    {
+      "name": "Barbarian Tribes of Yulgor",
+      "races": ["Barbarians"],
+      "territory": "The Frozen Tundra",
+      "ruler": "Ulgar, Chieftain of the North",
+      "units": [
+        {
+          "name": "Snow Tracker",
+          "unit_class": "Scout",
+          "hp": 7,
+          "move": 4,
+          "range": 1,
+          "atk": 1,
+          "special": "Trailblazer - In place of attack, the Snow Tracker may move an additional 2 squares, ignoring terrain movement costs."
+        },
+        {
+          "name": "Throwing Axe",
+          "unit_class": "Ranger",
+          "hp": 10,
+          "move": 3,
+          "range": 2,
+          "atk": 3,
+          "special": "Ricochet - If a Throwing Axe successfully defeats an enemy unit, it may make an additional attack against another enemy unit within 2 squares for 2 damage."
+        },
+        {
+          "name": "Berserker",
+          "unit_class": "Melee",
+          "hp": 14,
+          "move": 3,
+          "range": 1,
+          "atk": 4,
+          "special": "Bloodlust - For each enemy unit the Berserker successfully defeats, it gains +1 ATK for the rest of the game (maximum +3)."
+        },
+        {
+          "name": "Bear Rider",
+          "unit_class": "Heavy",
+          "hp": 18,
+          "move": 2,
+          "range": 1,
+          "atk": 4,
+          "special": "Bear Charge - In place of move, the Bear Rider gains +1 to its MOVE attribute and deals +1 ATK on its next attack this turn."
+        },
+        {
+          "name": "Snowball Catapult",
+          "unit_class": "Artillery",
+          "hp": 10,
+          "move": 1,
+          "range": 4,
+          "atk": 4,
+          "special": "Frostbite - In place of attack, the Snowball Catapult may target an enemy unit within range, dealing 2 damage and halving the target's MOVE attribute next turn."
+        },
+        {
+          "name": "Ulgar, Chieftain of the North",
+          "unit_class": "Leader",
+          "hp": 20,
+          "move": 4,
+          "range": 1,
+          "atk": 5,
+          "special": "Unbreakable Will - Once per turn, Ulgar can grant all friendly units within 3 squares immunity to movement impairing effects for one turn."
+        },
+        {
+          "name": "Skadi, Ice Witch",
+          "unit_class": "Leader",
+          "hp": 16,
+          "move": 3,
+          "range": 4,
+          "atk": 3,
+          "special": "Glacial Binding - Once per turn, in place of her attack, Skadi can immobilize an enemy unit within 4 squares by encasing it in ice. The affected unit cannot move or attack during their next turn."
+        },
+        {
+          "name": "Korgar, Beastmaster",
+          "unit_class": "Leader",
+          "hp": 18,
+          "move": 4,
+          "range": 1,
+          "atk": 4,
+          "special": "Call of the Wild - Once per turn, in place of his attack, Korgar can summon a Winter Wolf (HP: 10, MOVE: 4, RANGE: 1, ATK: 3) in an empty square within 3 squares. The Winter Wolf acts on Korgar's turn and is removed from the board if Korgar is defeated."
+        }
+      ]
+    }
+  ]
+}
