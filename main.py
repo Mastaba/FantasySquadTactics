@@ -165,8 +165,55 @@ def place_armies_on_map(game_map, army1, army2, orient):
         "active_game_pieces": active_game_pieces
     }
 
+def print_game_map_with_emojis(game_map, active_game_pieces):
+    """
+    Prints the game map to the console using emojis for terrain and game pieces.
 
-def display_game_with_pygame(game_map, active_game_pieces):
+    Parameters:
+    - game_map (np.ndarray): The game map grid.
+    - active_game_pieces (list of GamePiece): List of active game pieces with positions.
+    """
+    # Define emoji mapping
+    terrain_to_emoji = {
+        'Plains': '🌾',
+        'Forest': '🌲',
+        'Mountain': '⛰️',
+        'Lake': '🌊',
+        'River': '💧',
+        'Farm': '🚜',
+        'Village': '🏘️',
+        'City': '🏙️',
+    }
+
+    # Map for game pieces
+    piece_to_emoji = {
+        "Scout": '🕵️',
+        "Ranger": '🏹',
+        "Melee": '⚔️',
+        "Heavy": '🛡️',
+        "Artillery": '🧨',
+        "Leader": '👑'
+    }
+
+    # Create a copy of the map for visualization
+    emoji_map = np.full(game_map.shape, '', dtype=object)
+
+    # Fill the map with terrain emojis
+    for row in range(game_map.shape[0]):
+        for col in range(game_map.shape[1]):
+            terrain = game_map[row, col]
+            emoji_map[row, col] = terrain_to_emoji.get(terrain, '❓')
+
+    # Place game pieces on the map
+    for piece in active_game_pieces:
+        row, col = piece.position
+        emoji_map[row, col] = piece_to_emoji.get(piece.unit_class, '❓')
+
+    # Print the map row by row
+    for row in emoji_map:
+        print(' '.join(row))
+
+def display_game_with_pygame(game_map, active_game_pieces, faction_file, map_height, map_width, terrain_weights, army_points):
     pygame.init()
 
     # Screen dimensions
@@ -194,15 +241,37 @@ def display_game_with_pygame(game_map, active_game_pieces):
         current_turn = 1
         running = True
 
+        def reset_game():
+            nonlocal game_map, active_game_pieces
+            armies = build_random_armies(faction_file, army_points=army_points)
+            army1 = armies["faction1"]["army"]
+            army2 = armies["faction2"]["army"]
+
+            game_map_data = generate_game_map_adjusted(
+                height=map_height,
+                width=map_width,
+                terrain_weights=terrain_weights
+            )
+            game_map = game_map_data["map"]
+
+            game_data = place_armies_on_map(
+                game_map=game_map,
+                army1=army1,
+                army2=army2,
+                orient=game_map_data["player_start"]
+            )
+            active_game_pieces = game_data["active_game_pieces"]
+            print_game_map_with_emojis(game_map, active_game_pieces)
+
         def draw_map():
             for row in range(game_map.shape[0]):
                 for col in range(game_map.shape[1]):
                     terrain = game_map[row, col]
                     tile = terrain_tiles.get(terrain, None)
                     if tile:
-                        # Apply green background with 50% alpha
+                        # Apply custom green background (#739735) with 50% alpha
                         background = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
-                        background.fill((0, 255, 0, 128))  # Green with 50% alpha
+                        background.fill((0, 255, 0, 128))  # #739735 with 50% alpha
                         screen.blit(background, (col * cell_size, row * cell_size))
                         screen.blit(tile, (col * cell_size, row * cell_size))
 
@@ -213,9 +282,9 @@ def display_game_with_pygame(game_map, active_game_pieces):
 
                 try:
                     tile = pygame.image.load(tile_path).convert_alpha()
-                    # Apply green background with 50% alpha
+                    # Apply custom green background (#739735) with 50% alpha
                     background = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
-                    background.fill((0, 255, 0, 128))  # Green with 50% alpha
+                    background.fill((0, 255, 0, 128))  # #739735 with 50% alpha
                     screen.blit(background, (col * cell_size, row * cell_size))
                     screen.blit(tile, (col * cell_size, row * cell_size))
                 except FileNotFoundError:
@@ -225,16 +294,23 @@ def display_game_with_pygame(game_map, active_game_pieces):
             pygame.draw.rect(screen, (50, 50, 50), (0, game_map.shape[0] * cell_size, width, 100))
             turn_text = font.render(f"Player {current_turn}'s Turn", True, (255, 255, 255))
             screen.blit(turn_text, (20, game_map.shape[0] * cell_size + 20))
-            next_button = pygame.Rect(width - 120, game_map.shape[0] * cell_size + 20, 100, 50)
+
+            next_button = pygame.Rect(width - 240, game_map.shape[0] * cell_size + 20, 100, 50)
             pygame.draw.rect(screen, (200, 0, 0), next_button)
-            button_text = font.render("Next Turn", True, (255, 255, 255))
-            screen.blit(button_text, (width - 110, game_map.shape[0] * cell_size + 35))
-            return next_button
+            next_text = font.render("Next Turn", True, (255, 255, 255))
+            screen.blit(next_text, (width - 230, game_map.shape[0] * cell_size + 35))
+
+            reset_button = pygame.Rect(width - 120, game_map.shape[0] * cell_size + 20, 100, 50)
+            pygame.draw.rect(screen, (0, 0, 200), reset_button)
+            reset_text = font.render("Reset", True, (255, 255, 255))
+            screen.blit(reset_text, (width - 110, game_map.shape[0] * cell_size + 35))
+
+            return next_button, reset_button
 
         while running:
             screen.fill((0, 0, 0))
             draw_map()
-            next_button = draw_ui()
+            next_button, reset_button = draw_ui()
             pygame.display.flip()
 
             for event in pygame.event.get():
@@ -243,6 +319,8 @@ def display_game_with_pygame(game_map, active_game_pieces):
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if next_button.collidepoint(event.pos):
                         current_turn = 2 if current_turn == 1 else 1
+                    elif reset_button.collidepoint(event.pos):
+                        reset_game()
 
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -289,10 +367,34 @@ if __name__ == "__main__":
             orient=game_map_data["player_start"]
         )
 
+        # Print the map with emojis
+        print_game_map_with_emojis(
+            game_data["map"],
+            game_data["active_game_pieces"]
+        )
+
+        # Print the list of active game pieces with their terrain
+        print("\nActive Game Pieces with Terrain:")
+        for piece in game_data["active_game_pieces"]:
+            print(piece)
+
+        # Detailed stats for each game piece
+        print("\nDetailed Stats for Each Game Piece:")
+        for piece in game_data["active_game_pieces"]:
+            details = piece.get_details()
+            for key, value in details.items():
+                print(f"{key}: {value}")
+            print("-")
+
         # Launch the game
         display_game_with_pygame(
             game_map=game_data["map"],
-            active_game_pieces=game_data["active_game_pieces"]
+            active_game_pieces=game_data["active_game_pieces"],
+            faction_file=faction_file,
+            map_height=map_height,
+            map_width=map_width,
+            terrain_weights=terrain_weights,
+            army_points=20
         )
     except Exception as e:
         print(f"An error occurred during initialization: {e}")
