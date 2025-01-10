@@ -1,10 +1,11 @@
 import json
 import random
 import numpy as np
+import pygame
 
 
 class GamePiece:
-    def __init__(self, unit_id, unit_class, name, hp, move, range, atk, special, position, terrain):
+    def __init__(self, unit_id, unit_class, name, hp, move, range, atk, special, position, terrain, faction):
         self.unit_id = unit_id
         self.unit_class = unit_class
         self.name = name
@@ -15,23 +16,27 @@ class GamePiece:
         self.special = special
         self.position = position  # Tuple (row, col)
         self.terrain = terrain  # Type of terrain the unit is on
+        self.faction = faction  # Faction name
 
     def __repr__(self):
-        return f"{self.name} (HP: {self.hp}, Pos: {self.position}, Terrain: {self.terrain})"
+        return f"{self.name} (HP: {self.hp}, Pos: {self.position}, Terrain: {self.terrain}, Faction: {self.faction})"
 
-
+    def get_details(self):
+        return {
+            "ID": self.unit_id,
+            "Class": self.unit_class,
+            "Name": self.name,
+            "HP": self.hp,
+            "Move": self.move,
+            "Range": self.range,
+            "Attack": self.atk,
+            "Special": self.special,
+            "Position": self.position,
+            "Terrain": self.terrain,
+            "Faction": self.faction
+        }
 
 def build_army(faction, points):
-    """
-    Builds a single army for a given faction.
-
-    Parameters:
-    - faction (dict): The faction data containing available units.
-    - points (int): Total points allowed for the army.
-
-    Returns:
-    - list: List of units in the army.
-    """
     army = []
     remaining_points = points
 
@@ -65,7 +70,8 @@ def build_army(faction, points):
                 "move": unit["move"],
                 "range": unit["range"],
                 "atk": unit["atk"],
-                "special": unit["special"]
+                "special": unit["special"],
+                "faction": faction["name"]
             })
             remaining_points -= cost
         else:
@@ -78,16 +84,6 @@ def build_army(faction, points):
 
 
 def build_random_armies(file_path, army_points=20):
-    """
-    Builds two random armies from random factions using a local JSON file.
-
-    Parameters:
-    - file_path (str): Path to the JSON file containing faction data.
-    - army_points (int): Total points allowed for each army.
-
-    Returns:
-    - dict: Two armies with their respective units and total points used.
-    """
     with open(file_path, 'r') as file:
         data = json.load(file)
 
@@ -133,7 +129,7 @@ def place_armies_on_map(game_map, army1, army2, orient):
             position = start_positions[idx]
             row, col = position
             terrain = game_map[row, col]  # Get the terrain type at this position
-            game_map[position] = f"A{army_id}_{idx}"  # Mark the map with the unit's ID
+            game_map[row, col] = f"A{army_id}_{idx}"  # Mark the map with the unit's ID
             active_game_pieces.append(GamePiece(
                 unit_id=f"A{army_id}_{idx}",
                 unit_class=unit["unit_class"],
@@ -144,15 +140,20 @@ def place_armies_on_map(game_map, army1, army2, orient):
                 atk=unit["atk"],
                 special=unit["special"],
                 position=position,
-                terrain=terrain
+                terrain=terrain,
+                faction=unit["faction"]
             ))
 
     if orient == "north-south":
-        army1_positions = [(0, col) for col in range(len(army1))]
-        army2_positions = [(height - 1, col) for col in range(len(army2))]
+        center_start = width // 2 - len(army1) // 2
+        army1_positions = [(0, center_start + i) for i in range(len(army1))]
+        center_start = width // 2 - len(army2) // 2
+        army2_positions = [(height - 1, center_start + i) for i in range(len(army2))]
     elif orient == "east-west":
-        army1_positions = [(row, 0) for row in range(len(army1))]
-        army2_positions = [(row, width - 1) for row in range(len(army2))]
+        center_start = height // 2 - len(army1) // 2
+        army1_positions = [(center_start + i, 0) for i in range(len(army1))]
+        center_start = height // 2 - len(army2) // 2
+        army2_positions = [(center_start + i, width - 1) for i in range(len(army2))]
     else:
         raise ValueError("Invalid orient value. Use 'north-south' or 'east-west'.")
 
@@ -165,91 +166,133 @@ def place_armies_on_map(game_map, army1, army2, orient):
     }
 
 
-def print_game_map_with_emojis(game_map, active_game_pieces):
-    """
-    Prints the game map to the console using emojis for terrain and game pieces.
+def display_game_with_pygame(game_map, active_game_pieces):
+    pygame.init()
 
-    Parameters:
-    - game_map (np.ndarray): The game map grid.
-    - active_game_pieces (list of GamePiece): List of active game pieces with positions.
-    """
-    # Define emoji mapping
-    terrain_to_emoji = {
-        'Plains': '🌾',
-        'Forest': '🌲',
-        'Mountain': '⛰️',
-        'Lake': '🌊',
-        'River': '💧',
-        'Farm': '🚜',
-        'Village': '🏘️',
-        'City': '🏙️',
-    }
+    # Screen dimensions
+    cell_size = 80  # Adjusted for tile size
+    width = game_map.shape[1] * cell_size
+    height = game_map.shape[0] * cell_size + 100  # Extra space for UI
 
-    # Map for game pieces
-    piece_to_emoji = {
-        "Scout": '🕵️',
-        "Ranger": '🏹',
-        "Melee": '⚔️',
-        "Heavy": '🛡️',
-        "Artillery": '🧨',
-        "Leader": '👑'
-    }
+    try:
+        screen = pygame.display.set_mode((width, height))
+        pygame.display.set_caption("Turn-Based Strategy Game")
 
-    # Create a copy of the map for visualization
-    emoji_map = np.full(game_map.shape, '', dtype=object)
+        # Load graphical tiles
+        terrain_tiles = {
+            'Plains': pygame.image.load('graphics/Plains.png').convert_alpha(),
+            'Forest': pygame.image.load('graphics/Forest.png').convert_alpha(),
+            'Mountain': pygame.image.load('graphics/Mountain.png').convert_alpha(),
+            'Lake': pygame.image.load('graphics/Lake.png').convert_alpha(),
+            'River': pygame.image.load('graphics/River.png').convert_alpha(),
+            'Farm': pygame.image.load('graphics/Farm.png').convert_alpha(),
+            'Village': pygame.image.load('graphics/Village.png').convert_alpha(),
+            'City': pygame.image.load('graphics/City.png').convert_alpha()
+        }
 
-    # Fill the map with terrain emojis
-    for row in range(game_map.shape[0]):
-        for col in range(game_map.shape[1]):
-            terrain = game_map[row, col]
-            emoji_map[row, col] = terrain_to_emoji.get(terrain, '❓')
+        font = pygame.font.SysFont(None, 24)
+        current_turn = 1
+        running = True
 
-    # Place game pieces on the map
-    for piece in active_game_pieces:
-        row, col = piece.position
-        emoji_map[row, col] = piece_to_emoji.get(piece.unit_class, '❓')
+        def draw_map():
+            for row in range(game_map.shape[0]):
+                for col in range(game_map.shape[1]):
+                    terrain = game_map[row, col]
+                    tile = terrain_tiles.get(terrain, None)
+                    if tile:
+                        # Apply green background with 50% alpha
+                        background = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
+                        background.fill((0, 255, 0, 128))  # Green with 50% alpha
+                        screen.blit(background, (col * cell_size, row * cell_size))
+                        screen.blit(tile, (col * cell_size, row * cell_size))
 
-    # Print the map row by row
-    for row in emoji_map:
-        print(' '.join(row))
+            for piece in active_game_pieces:
+                row, col = piece.position
+                faction = piece.faction.replace(" ", "_")  # Replace spaces with underscores for folder paths
+                tile_path = f"graphics/{faction}/{piece.unit_class.lower()}.png"
+
+                try:
+                    tile = pygame.image.load(tile_path).convert_alpha()
+                    # Apply green background with 50% alpha
+                    background = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
+                    background.fill((0, 255, 0, 128))  # Green with 50% alpha
+                    screen.blit(background, (col * cell_size, row * cell_size))
+                    screen.blit(tile, (col * cell_size, row * cell_size))
+                except FileNotFoundError:
+                    print(f"Missing graphic for {piece.unit_class} in faction {faction}: {tile_path}")
+
+        def draw_ui():
+            pygame.draw.rect(screen, (50, 50, 50), (0, game_map.shape[0] * cell_size, width, 100))
+            turn_text = font.render(f"Player {current_turn}'s Turn", True, (255, 255, 255))
+            screen.blit(turn_text, (20, game_map.shape[0] * cell_size + 20))
+            next_button = pygame.Rect(width - 120, game_map.shape[0] * cell_size + 20, 100, 50)
+            pygame.draw.rect(screen, (200, 0, 0), next_button)
+            button_text = font.render("Next Turn", True, (255, 255, 255))
+            screen.blit(button_text, (width - 110, game_map.shape[0] * cell_size + 35))
+            return next_button
+
+        while running:
+            screen.fill((0, 0, 0))
+            draw_map()
+            next_button = draw_ui()
+            pygame.display.flip()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if next_button.collidepoint(event.pos):
+                        current_turn = 2 if current_turn == 1 else 1
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        pygame.quit()
 
 if __name__ == "__main__":
-    terrain_weights_example = {
-        'Plains': 40,
-        'Forest': 30,
-        'Mountain': 10,
-        'Lake': 5,
-        'River': 5,
-        'Farm': 5,
-        'Village': 3,
-        'City': 2
+    # Set file path for faction data (update with your actual file path)
+    faction_file = "factions.json"
+
+    # Set terrain weights and map dimensions
+    terrain_weights = {
+        "Plains": 0.4,
+        "Forest": 0.2,
+        "Mountain": 0.1,
+        "Lake": 0.1,
+        "River": 0.1,
+        "Farm": 0.05,
+        "Village": 0.03,
+        "City": 0.02
     }
+    map_height = 10
+    map_width = 10
 
-    file_path = "factions.json"
-    armies = build_random_armies(file_path, army_points=20)
+    try:
+        # Build armies
+        armies = build_random_armies(faction_file, army_points=20)
+        army1 = armies["faction1"]["army"]
+        army2 = armies["faction2"]["army"]
 
-    game_map_data = generate_game_map_adjusted(
-        height=10,
-        width=10,
-        terrain_weights=terrain_weights_example,
-        player_start="north-south"
-    )
+        # Generate the game map
+        game_map_data = generate_game_map_adjusted(
+            height=map_height,
+            width=map_width,
+            terrain_weights=terrain_weights
+        )
+        game_map = game_map_data["map"]
 
-    populated_map_data = place_armies_on_map(
-        game_map_data["map"],
-        armies["faction1"]["army"],
-        armies["faction2"]["army"],
-        game_map_data["player_start"]
-    )
+        # Place armies on the map
+        game_data = place_armies_on_map(
+            game_map=game_map,
+            army1=army1,
+            army2=army2,
+            orient=game_map_data["player_start"]
+        )
 
-    # Print the map with emojis
-    print_game_map_with_emojis(
-        populated_map_data["map"],
-        populated_map_data["active_game_pieces"]
-    )
-
-    # Print the list of active game pieces with their terrain
-    print("\nActive Game Pieces with Terrain:")
-    print(populated_map_data)
-    for piece in populated_map_data["active_game_pieces"]:
-        print(piece)
+        # Launch the game
+        display_game_with_pygame(
+            game_map=game_data["map"],
+            active_game_pieces=game_data["active_game_pieces"]
+        )
+    except Exception as e:
+        print(f"An error occurred during initialization: {e}")
