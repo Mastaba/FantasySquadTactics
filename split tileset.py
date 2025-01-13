@@ -44,8 +44,8 @@ def split_tileset(tileset_path, json_path, output_dir):
         os.makedirs(faction_dir, exist_ok=True)
 
         for i, unit_class in enumerate(['Scout', 'Ranger', 'Melee', 'Heavy', 'Artillery', 'Leader']):
-            row = faction_start_row + i // 4
-            col = i % 4
+            row = faction_start_row + i // 6
+            col = i % 6
             tile = tileset.crop((
                 col * tile_width, row * tile_height,
                 (col + 1) * tile_width, (row + 1) * tile_height
