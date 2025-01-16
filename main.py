@@ -2,6 +2,7 @@ import json
 import random
 import numpy as np
 import pygame
+from populate import generate_game_map, build_random_armies
 
 
 class GamePiece:
@@ -11,6 +12,7 @@ class GamePiece:
         self.name = name
         self.hp = hp
         self.move = move
+        self.moves_remaining = move  # New attribute
         self.range = range
         self.atk = atk
         self.special = special
@@ -19,87 +21,7 @@ class GamePiece:
         self.faction = faction  # Faction name
 
     def __repr__(self):
-        return f"{self.name} (HP: {self.hp}, Pos: {self.position}, Terrain: {self.terrain})"
-
-
-def generate_game_map(height, width, terrain_weights):
-    terrain_types = list(terrain_weights.keys())
-    terrain_probs = [terrain_weights[t] for t in terrain_types]
-    terrain_probs = np.array(terrain_probs) / sum(terrain_probs)
-
-    return np.random.choice(terrain_types, size=(height, width), p=terrain_probs)
-
-
-def build_army(faction, points):
-    army = []
-    remaining_points = points
-
-    unit_costs = {
-        "Scout": 2,
-        "Ranger": 2,
-        "Melee": 3,
-        "Heavy": 5,
-        "Artillery": 6,
-        "Leader": 10
-    }
-
-    valid_units = [
-        unit for unit in faction["units"]
-        if unit["unit_class"] in unit_costs
-    ]
-
-    if not valid_units:
-        raise ValueError(f"No valid units found for faction: {faction['name']}")
-
-    while remaining_points > 0 and valid_units:
-        unit = random.choice(valid_units)
-        cost = unit_costs[unit["unit_class"]]
-
-        if cost <= remaining_points:
-            army.append({
-                "name": unit["name"],
-                "unit_class": unit["unit_class"],
-                "cost": cost,
-                "hp": unit["hp"],
-                "move": unit["move"],
-                "range": unit["range"],
-                "atk": unit["atk"],
-                "special": unit["special"],
-                "faction": faction["name"]
-            })
-            remaining_points -= cost
-        else:
-            valid_units = [
-                u for u in valid_units
-                if unit_costs[u["unit_class"]] <= remaining_points
-            ]
-
-    return army
-
-
-def build_random_armies(file_path, army_points=20):
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-
-    factions = data["factions"]
-
-    # Select two random factions
-    faction1, faction2 = random.sample(factions, 2)
-
-    # Build armies for both factions
-    army1 = build_army(faction1, army_points)
-    army2 = build_army(faction2, army_points)
-
-    return {
-        "faction1": {
-            "name": faction1["name"],
-            "army": army1
-        },
-        "faction2": {
-            "name": faction2["name"],
-            "army": army2
-        }
-    }
+        return f"{self.name} (HP: {self.hp}, Pos: {self.position}, Terrain: {self.terrain}, Moves Remaining: {self.moves_remaining})"
 
 
 def place_units_on_map(terrain_map, army1, army2, orient="north-south"):
@@ -145,19 +67,49 @@ def place_units_on_map(terrain_map, army1, army2, orient="north-south"):
     return unit_positions
 
 
-def move_unit(unit_id, new_position, unit_positions, terrain_map):
+def move_unit(unit_id, new_position, unit_positions, terrain_map, movement_costs):
     row, col = new_position
     if row < 0 or row >= terrain_map.shape[0] or col < 0 or col >= terrain_map.shape[1]:
         raise ValueError("Position out of bounds")
 
     terrain = terrain_map[row, col]
+    cost = movement_costs.get(terrain, float('inf'))
+
     if terrain in {"Mountain", "Lake"}:
         raise ValueError("Terrain not passable")
 
     unit = unit_positions[unit_id]
+    if cost > unit.moves_remaining:
+        raise ValueError("Not enough movement points")
+
     unit.position = new_position
     unit.terrain = terrain
+    unit.moves_remaining -= cost
     unit_positions[unit_id] = unit
+
+
+def calculate_legal_moves(unit, terrain_map, movement_costs):
+    height, width = terrain_map.shape
+    legal_moves = set()
+    to_visit = [(unit.position, unit.moves_remaining)]  # (current position, remaining movement)
+
+    while to_visit:
+        current_pos, remaining_move = to_visit.pop()
+        row, col = current_pos
+        legal_moves.add(current_pos)
+
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            new_row, new_col = row + dr, col + dc
+
+            if 0 <= new_row < height and 0 <= new_col < width:
+                new_pos = (new_row, new_col)
+                terrain = terrain_map[new_row, new_col]
+                cost = movement_costs.get(terrain, float('inf'))
+
+                if cost <= remaining_move and new_pos not in legal_moves:
+                    to_visit.append((new_pos, remaining_move - cost))
+
+    return legal_moves
 
 
 def render_combined_map(terrain_map, unit_positions):
@@ -200,6 +152,9 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
         current_turn = 1
         running = True
 
+        selected_unit = None
+        legal_moves = set()
+
         def reset_game():
             nonlocal game_map, unit_positions
             armies = build_random_armies(faction_file, army_points=army_points)
@@ -231,6 +186,13 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                         background.fill((0, 255, 0, 128))  # #739735 with 50% alpha
                         screen.blit(background, (col * cell_size, row * cell_size))
                         screen.blit(tile, (col * cell_size, row * cell_size))
+
+                    if (row, col) in legal_moves:
+                        pygame.draw.rect(
+                            screen, (255, 255, 0),
+                            (col * cell_size, row * cell_size, cell_size, cell_size),
+                            width=3  # Border width for yellow box
+                        )
 
             for piece in unit_positions.values():
                 row, col = piece.position
@@ -264,6 +226,48 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
 
             return next_button, reset_button
 
+        def handle_click(pos):
+            nonlocal selected_unit, legal_moves
+            col, row = pos[0] // cell_size, pos[1] // cell_size
+            clicked_pos = (row, col)
+
+            if selected_unit and clicked_pos in legal_moves:
+                move_unit(
+                    unit_id=selected_unit.unit_id,
+                    new_position=clicked_pos,
+                    unit_positions=unit_positions,
+                    terrain_map=game_map,
+                    movement_costs={
+                        "Plains": 1,
+                        "Forest": 2,
+                        "Mountain": float('inf'),
+                        "Lake": float('inf'),
+                        "Farm": 1,
+                        "Village": 1,
+                        "City": 1
+                    }
+                )
+                legal_moves.clear()
+                selected_unit = None
+            else:
+                for unit_id, unit in unit_positions.items():
+                    if unit.position == clicked_pos:
+                        selected_unit = unit
+                        legal_moves = calculate_legal_moves(selected_unit, game_map, {
+                            "Plains": 1,
+                            "Forest": 2,
+                            "Mountain": float('inf'),
+                            "Lake": float('inf'),
+                            "Farm": 1,
+                            "Village": 1,
+                            "City": 1
+                        })
+                        return
+
+            # Deselect if clicking elsewhere
+            selected_unit = None
+            legal_moves = set()
+
         # Main game loop
         while running:
             screen.fill((0, 0, 0))
@@ -274,6 +278,9 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    handle_click(event.pos)
+
     except Exception as e:
         print(f"An error occurred: {e}")
     finally:
@@ -307,7 +314,15 @@ if __name__ == "__main__":
     render_combined_map(terrain_map, unit_positions)
 
     print("\nMoving Scout1 to (1, 1):")
-    move_unit("A1_0", (1, 1), unit_positions, terrain_map)
+    move_unit("A1_0", (1, 1), unit_positions, terrain_map, movement_costs={
+        "Plains": 1,
+        "Forest": 2,
+        "Mountain": float('inf'),
+        "Lake": float('inf'),
+        "Farm": 1,
+        "Village": 1,
+        "City": 1
+    })
     render_combined_map(terrain_map, unit_positions)
     print(unit_positions)
 
