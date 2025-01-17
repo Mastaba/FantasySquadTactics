@@ -71,7 +71,6 @@ def calculate_legal_moves(unit, terrain_map, movement_costs, unit_positions):
     return legal_moves
 
 
-
 def calculate_legal_attacks(unit, terrain_map, unit_positions):
 
     height, width = terrain_map.shape
@@ -112,7 +111,7 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
 
     try:
         screen = pygame.display.set_mode((width, height))
-        pygame.display.set_caption("Turn-Based Strategy Game")
+        pygame.display.set_caption("Fantasy Squad Tactics")
 
         # Load graphical tiles
         terrain_tiles = {
@@ -126,7 +125,7 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
             'City': pygame.image.load('graphics/City.png').convert_alpha()
         }
 
-        font = pygame.font.SysFont(None, 24)
+        font = pygame.font.Font('IMFellEnglishSC-Regular.ttf', 24)
         current_turn = 1
         running = True
 
@@ -278,11 +277,28 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
             legal_moves = {}
             legal_attacks = set()
 
+        def display_hover_info(pos):
+            col, row = pos[0] // cell_size, pos[1] // cell_size
+            hover_pos = (row, col)
+
+            for unit in unit_positions.values():
+                if unit.position == hover_pos:
+                    unit_info = font.render(
+                        f"{unit.name} (HP: {unit.hp}, Move: {unit.moves_remaining}, Terrain: {unit.terrain})",
+                        True, (255, 255, 255)
+                    )
+                    screen.blit(unit_info, (pos[0] + 10, pos[1] + 10))
+                    return
+
         # Main game loop
         while running:
             screen.fill((0, 0, 0))
             draw_map()
             end_button, reset_button, move_button, attack_button = draw_ui()
+
+            mouse_pos = pygame.mouse.get_pos()
+            display_hover_info(mouse_pos)
+
             pygame.display.flip()
 
             for event in pygame.event.get():
