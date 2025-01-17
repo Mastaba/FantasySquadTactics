@@ -2,7 +2,10 @@ import json
 import random
 import numpy as np
 import pygame
-from populate import generate_game_map, build_random_armies
+from game_classes import GamePiece
+from populate import generate_game_map, build_random_armies, place_units_on_map
+
+selected_tile = None
 
 MOVEMENT_COSTS = {
     "Plains": 1,
@@ -14,68 +17,6 @@ MOVEMENT_COSTS = {
     "Village": 1,
     "City": 2
 }
-
-class GamePiece:
-    def __init__(self, unit_id, unit_class, name, hp, move, range, atk, special, position, terrain, faction):
-        self.unit_id = unit_id
-        self.unit_class = unit_class
-        self.name = name
-        self.hp = hp
-        self.move = move
-        self.moves_remaining = move  # New attribute
-        self.range = range
-        self.atk = atk
-        self.special = special
-        self.position = position  # Tuple (row, col)
-        self.terrain = terrain  # Type of terrain the unit is on
-        self.faction = faction  # Faction name
-
-    def __repr__(self):
-        return f"{self.name} (HP: {self.hp}, Pos: {self.position}, Terrain: {self.terrain}, Moves Remaining: {self.moves_remaining})"
-
-
-def place_units_on_map(terrain_map, army1, army2, orient="north-south"):
-    height, width = terrain_map.shape
-    unit_positions = {}
-
-    def assign_positions(army, start_positions, army_id):
-        for idx, unit in enumerate(army):
-            position = start_positions[idx]
-            row, col = position
-            terrain = terrain_map[row, col]
-            unit_id = f"A{army_id}_{idx}"
-            unit_positions[unit_id] = GamePiece(
-                unit_id=unit_id,
-                unit_class=unit["unit_class"],
-                name=unit["name"],
-                hp=unit["hp"],
-                move=unit["move"],
-                range=unit["range"],
-                atk=unit["atk"],
-                special=unit["special"],
-                position=position,
-                terrain=terrain,
-                faction=unit["faction"]
-            )
-
-    if orient == "north-south":
-        center_start = width // 2 - len(army1) // 2
-        army1_positions = [(0, center_start + i) for i in range(len(army1))]
-        center_start = width // 2 - len(army2) // 2
-        army2_positions = [(height - 1, center_start + i) for i in range(len(army2))]
-    elif orient == "east-west":
-        center_start = height // 2 - len(army1) // 2
-        army1_positions = [(center_start + i, 0) for i in range(len(army1))]
-        center_start = height // 2 - len(army2) // 2
-        army2_positions = [(center_start + i, width - 1) for i in range(len(army2))]
-    else:
-        raise ValueError("Invalid orientation. Use 'north-south' or 'east-west'.")
-
-    assign_positions(army1, army1_positions, 1)
-    assign_positions(army2, army2_positions, 2)
-
-    return unit_positions
-
 
 def move_unit(unit_id, new_position, unit_positions, terrain_map, movement_costs):
     row, col = new_position
@@ -98,18 +39,6 @@ def move_unit(unit_id, new_position, unit_positions, terrain_map, movement_costs
 
 
 def calculate_legal_moves(unit, terrain_map, movement_costs, unit_positions):
-    """
-    Calculate the set of legal moves for a given unit based on terrain and movement costs, excluding occupied positions.
-
-    Args:
-        unit (GamePiece): The unit for which to calculate legal moves.
-        terrain_map (ndarray): The game terrain map.
-        movement_costs (dict): Movement costs for each terrain type.
-        unit_positions (dict): All unit positions to check for occupied tiles.
-
-    Returns:
-        dict: A dictionary where keys are tuples representing legal move coordinates, and values are movement costs.
-    """
     height, width = terrain_map.shape
     legal_moves = {}
     to_visit = [(unit.position, unit.moves_remaining)]  # (current position, remaining movement)
@@ -117,8 +46,11 @@ def calculate_legal_moves(unit, terrain_map, movement_costs, unit_positions):
 
     while to_visit:
         current_pos, remaining_move = to_visit.pop()
-        if current_pos not in legal_moves:
-            legal_moves[current_pos] = unit.moves_remaining - remaining_move
+        move_cost = unit.moves_remaining - remaining_move
+
+        # Update only if this path has a lower cost
+        if current_pos not in legal_moves or move_cost < legal_moves[current_pos]:
+            legal_moves[current_pos] = move_cost
 
         row, col = current_pos
         for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
@@ -126,9 +58,9 @@ def calculate_legal_moves(unit, terrain_map, movement_costs, unit_positions):
             new_pos = (new_row, new_col)
 
             if (
-                    0 <= new_row < height
-                    and 0 <= new_col < width
-                    and new_pos not in occupied_positions
+                0 <= new_row < height
+                and 0 <= new_col < width
+                and new_pos not in occupied_positions
             ):
                 terrain = terrain_map[new_row, new_col]
                 cost = movement_costs.get(terrain, float('inf'))
@@ -139,18 +71,9 @@ def calculate_legal_moves(unit, terrain_map, movement_costs, unit_positions):
     return legal_moves
 
 
+
 def calculate_legal_attacks(unit, terrain_map, unit_positions):
-    """
-    Calculate the set of legal attacks for a given unit based on range and target presence.
 
-    Args:
-        unit (GamePiece): The unit for which to calculate legal attacks.
-        terrain_map (ndarray): The game terrain map.
-        unit_positions (dict): All unit positions to check for target tiles.
-
-    Returns:
-        set: A set of tuples representing coordinates of legal attack targets.
-    """
     height, width = terrain_map.shape
     legal_attacks = set()
     row, col = unit.position
@@ -280,7 +203,6 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                     tile = pygame.image.load(tile_path).convert_alpha()
                     # Apply a background fill behind the unit tiles
                     background = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
-                    background.fill((0, 255, 0, 128))  # #739735 with 50% alpha
                     screen.blit(background, (col * cell_size, row * cell_size))
                     screen.blit(tile, (col * cell_size, row * cell_size))
                 except FileNotFoundError:
