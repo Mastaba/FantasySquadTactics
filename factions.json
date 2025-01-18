@@ -241,82 +241,82 @@
       ]
     },
     {
-      "name": "Barbarian Tribes of Yulgor",
-      "races": ["Barbarians"],
-      "territory": "The Frozen Tundra",
-      "ruler": "Ulgar, Chieftain of the North",
+      "name": "Orc, Goblin, Ogre, and Troll Hordes",
+      "races": ["Orcs", "Goblins", "Ogres", "Trolls"],
+      "territory": "The Blighted Wastes",
+      "ruler": "Gorak, Orc Warlord",
       "units": [
         {
-          "name": "Snow Tracker",
+          "name": "Goblin Scout",
           "unit_class": "Scout",
-          "hp": 7,
+          "hp": 6,
           "move": 4,
           "range": 1,
           "atk": 1,
-          "special": "Trailblazer - In place of attack, the Snow Tracker may move an additional 2 squares, ignoring terrain movement costs."
+          "special": "Slippery - The Goblin Scout may move through enemy-occupied squares."
         },
         {
-          "name": "Throwing Axe",
-          "unit_class": "Ranger",
+          "name": "Orc Archer",
+          "unit_class": "Ranged",
           "hp": 10,
           "move": 3,
-          "range": 2,
+          "range": 3,
           "atk": 3,
-          "special": "Ricochet - If a Throwing Axe successfully defeats an enemy unit, it may make an additional attack against another enemy unit within 2 squares for 2 damage."
+          "special": "Volley - In place of attack, the Orc Archer may target all enemy units within a 2-square radius of a chosen square within range, dealing 2 damage to each."
         },
         {
-          "name": "Berserker",
+          "name": "Ogre Brute",
           "unit_class": "Melee",
-          "hp": 14,
-          "move": 3,
-          "range": 1,
-          "atk": 4,
-          "special": "Bloodlust - For each enemy unit the Berserker successfully defeats, it gains +1 ATK for the rest of the game (maximum +3)."
-        },
-        {
-          "name": "Bear Rider",
-          "unit_class": "Heavy",
-          "hp": 18,
+          "hp": 17,
           "move": 2,
           "range": 1,
           "atk": 4,
-          "special": "Bear Charge - In place of move, the Bear Rider gains +1 to its MOVE attribute and deals +1 ATK on its next attack this turn."
+          "special": "Smash - In place of attack, the Ogre Brute may deal 2 damage to all adjacent enemy units."
         },
         {
-          "name": "Snowball Catapult",
-          "unit_class": "Artillery",
-          "hp": 10,
+          "name": "Troll Crusher",
+          "unit_class": "Heavy",
+          "hp": 22,
           "move": 1,
-          "range": 4,
-          "atk": 4,
-          "special": "Frostbite - In place of attack, the Snowball Catapult may target an enemy unit within range, dealing 2 damage and halving the target's MOVE attribute next turn."
-        },
-        {
-          "name": "Ulgar, Chieftain of the North",
-          "unit_class": "Leader",
-          "hp": 20,
-          "move": 4,
           "range": 1,
           "atk": 5,
-          "special": "Unbreakable Will - Once per turn, Ulgar can grant all friendly units within 3 squares immunity to movement impairing effects for one turn."
+          "special": "Regeneration - The Troll Crusher regains 2 HP at the start of each turn."
         },
         {
-          "name": "Skadi, Ice Witch",
+          "name": "Goblin Sapper",
+          "unit_class": "Artillery",
+          "hp": 8,
+          "move": 3,
+          "range": 2,
+          "atk": 2,
+          "special": "Sabotage - In place of attack, the Goblin Sapper may target a square within range, dealing 3 damage to all enemy units within a 2-square radius and destroying any structures in the affected area."
+        },
+        {
+          "name": "Gorak, Orc Warlord",
           "unit_class": "Leader",
-          "hp": 16,
+          "hp": 21,
+          "move": 3,
+          "range": 1,
+          "atk": 5,
+          "special": "Warcry - Once per turn, Gorak can grant all friendly units within 3 squares +1 ATK and +1 effective range for one turn."
+        },
+        {
+          "name": "Gribnash, Goblin Shaman",
+          "unit_class": "Leader",
+          "hp": 15,
           "move": 3,
           "range": 4,
-          "atk": 3,
-          "special": "Glacial Binding - Once per turn, in place of her attack, Skadi can immobilize an enemy unit within 4 squares by encasing it in ice. The affected unit cannot move or attack during their next turn."
+          "atk": 2,
+          "special": "Unstable Hex - Once per turn, in place of his attack, Gribnash can cast a random hex on an enemy unit within range, applying one of the following effects: slow (unit's MOVE is halved next turn), weaken (unit's ATK is reduced by 2 next turn), or disorient (unit moves in a random direction 1 square next turn, if possible)."
         },
         {
-          "name": "Korgar, Beastmaster",
+          "name": "Krug, Ogre Chieftain",
           "unit_class": "Leader",
-          "hp": 18,
-          "move": 4,
+          "hp": 24,
+          "move": 2,
           "range": 1,
-          "atk": 4,
-          "special": "Call of the Wild - Once per turn, in place of his attack, Korgar can summon a Winter Wolf (HP: 10, MOVE: 4, RANGE: 1, ATK: 3) in an empty square within 3 squares. The Winter Wolf acts on Korgar's turn and is removed from the board if Korgar is defeated."
+          "atk": 6,
+          "special": "Earthshaker - Once per turn, in place of his attack, Krug can slam the ground, dealing 3 damage to all enemy units within 2 squares and reducing their MOVE by 1 next turn."
         }
       ]
     }

@@ -1,22 +1,9 @@
-import json
-import random
-import numpy as np
 import pygame
 from game_classes import GamePiece
 from populate import generate_game_map, build_random_armies, place_units_on_map
-
 selected_tile = None
 
-MOVEMENT_COSTS = {
-    "Plains": 1,
-    "Forest": 2,
-    "Mountain": 3,
-    "Lake": float('inf'),
-    "River": 3,
-    "Farm": 1,
-    "Village": 1,
-    "City": 2
-}
+MOVEMENT_COSTS = {"Plains": 1, "Forest": 2, "Mountain": 3, "Lake": float('inf'), "River": 3, "Farm": 1, "Village": 1, "City": 2}
 
 def move_unit(unit_id, new_position, unit_positions, terrain_map, movement_costs):
     row, col = new_position
@@ -26,7 +13,7 @@ def move_unit(unit_id, new_position, unit_positions, terrain_map, movement_costs
     terrain = terrain_map[row, col]
     cost = movement_costs.get(terrain, float('inf'))
 
-    if terrain in {"Mountain", "Lake"}:
+    if terrain in {"Lake"}:
         raise ValueError("Terrain not passable")
 
     unit = unit_positions[unit_id]
@@ -36,7 +23,6 @@ def move_unit(unit_id, new_position, unit_positions, terrain_map, movement_costs
     unit.position = new_position
     unit.terrain = terrain
     unit_positions[unit_id] = unit
-
 
 def calculate_legal_moves(unit, terrain_map, movement_costs, unit_positions):
     height, width = terrain_map.shape
@@ -48,8 +34,8 @@ def calculate_legal_moves(unit, terrain_map, movement_costs, unit_positions):
         current_pos, remaining_move = to_visit.pop()
         move_cost = unit.moves_remaining - remaining_move
 
-        # Update only if this path has a lower cost
-        if current_pos not in legal_moves or move_cost < legal_moves[current_pos]:
+        # Exclude the unit's current position
+        if current_pos != unit.position and (current_pos not in legal_moves or move_cost < legal_moves[current_pos]):
             legal_moves[current_pos] = move_cost
 
         row, col = current_pos
@@ -88,7 +74,6 @@ def calculate_legal_attacks(unit, terrain_map, unit_positions):
 
     return legal_attacks
 
-
 def render_combined_map(terrain_map, unit_positions):
     combined_map = terrain_map.copy()
 
@@ -99,15 +84,12 @@ def render_combined_map(terrain_map, unit_positions):
     for row in combined_map:
         print(" ".join(row))
 
-
 def display_game_with_pygame(game_map, unit_positions, faction_file, map_height, map_width, terrain_weights,
                              army_points):
     pygame.init()
-
-    # Screen dimensions
     cell_size = 80  # Adjusted for tile size
     width = game_map.shape[1] * cell_size
-    height = game_map.shape[0] * cell_size + 100  # Extra space for UI
+    height = game_map.shape[0] * cell_size + 200  # Extra space for UI
 
     try:
         screen = pygame.display.set_mode((width, height))
@@ -172,15 +154,15 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                     if tile:
                         # Apply a background fill behind the map tiles
                         background = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
-                        background.fill((0, 255, 0, 128))  # #739735 with 50% alpha
+                        background.fill((0, 175, 0, 128))  # #739735 with 50% alpha
                         screen.blit(background, (col * cell_size, row * cell_size))
                         screen.blit(tile, (col * cell_size, row * cell_size))
 
                     if (row, col) in legal_moves:
                         pygame.draw.rect(
                             screen, (255, 255, 0),
-                            (col * cell_size, row * cell_size, cell_size, cell_size),
-                            width=3  # Border width for yellow box
+                            (col * cell_size +2 , row * cell_size +2, cell_size -4, cell_size -4),
+                            width=2  # Border width for yellow box
                         )
                         # Draw the movement cost in the top-left corner
                         move_cost_text = font.render(str(legal_moves[(row, col)]), True, (0, 0, 0))
@@ -202,42 +184,93 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                     tile = pygame.image.load(tile_path).convert_alpha()
                     # Apply a background fill behind the unit tiles
                     background = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
+                    if piece == selected_unit:
+                        pygame.draw.circle(
+                            background,
+                            (0, 255, 0),
+                            (cell_size // 2, cell_size // 2),
+                            cell_size // 2,
+                            5
+                        )
                     screen.blit(background, (col * cell_size, row * cell_size))
                     screen.blit(tile, (col * cell_size, row * cell_size))
                 except FileNotFoundError:
                     print(f"Missing graphic for {piece.unit_class} in faction {faction}: {tile_path}")
 
+        import os
+
         def draw_ui():
-            pygame.draw.rect(screen, (50, 50, 50), (0, game_map.shape[0] * cell_size, width, 100))
-            turn_text = font.render(f"Player {current_turn}'s Turn", True, (255, 255, 255))
-            screen.blit(turn_text, (20, game_map.shape[0] * cell_size + 20))
+            # Background for UI
+            pygame.draw.rect(screen, (50, 50, 50), (0, game_map.shape[0] * cell_size + 75, width, 100))
+
+            # Player turn
+            large_font = pygame.font.Font('IMFellEnglishSC-Regular.ttf', 35)
+            turn_text = large_font.render(f"Player {current_turn}'s Turn", True, (200, 200, 200))
+            screen.blit(turn_text, (width // 2 - turn_text.get_width() // 2, game_map.shape[0] * cell_size + 10))
+
+            # Selected unit panel
+            panel_x = 20
+            panel_y = game_map.shape[0] * cell_size + 65
+            panel_width = 300
+            panel_height = 200
+            pygame.draw.rect(screen, (80, 80, 80), (panel_x, panel_y, panel_width, panel_height))
+            pygame.draw.rect(screen, (200, 200, 200), (panel_x, panel_y, panel_width, panel_height), 2)
 
             if selected_unit:
-                unit_info = font.render(
-                    f"{selected_unit.name} (HP: {selected_unit.hp}, Moves: {selected_unit.moves_remaining}, Terrain: {selected_unit.terrain})",
-                    True, (255, 255, 255)
-                )
-                screen.blit(unit_info, (20, game_map.shape[0] * cell_size + 50))
+                unit_name_text = font.render(selected_unit.name, True, (255, 255, 255))
+                unit_stats_text = font.render(f"HP: {selected_unit.hp}  Range: {selected_unit.range}", True,
+                                              (255, 255, 255))
 
-            end_button = pygame.Rect(width - 240, game_map.shape[0] * cell_size + 20, 100, 50)
+                # Display unit icon if available
+                faction = selected_unit.faction.replace(" ", "_")
+                unit_icon_path = f"graphics/{faction}/{selected_unit.unit_class.lower()}.png"
+
+                try:
+                    if os.path.exists(unit_icon_path):
+                        unit_icon = pygame.image.load(unit_icon_path).convert_alpha()
+                    else:
+                        raise FileNotFoundError(f"Missing graphic: {unit_icon_path}")
+                except FileNotFoundError:
+                    print(
+                        f"Missing graphic for {selected_unit.unit_class} in faction {selected_unit.faction}. Using placeholder.")
+                    unit_icon = pygame.image.load("graphics/placeholder.png").convert_alpha()
+
+                icon_size = (50, 50)
+                unit_icon = pygame.transform.scale(unit_icon, icon_size)
+                screen.blit(unit_icon, (panel_x + 10, panel_y + 15))
+
+                # Display text next to icon
+                screen.blit(unit_name_text, (panel_x + 70, panel_y + 10))
+                screen.blit(unit_stats_text, (panel_x + 70, panel_y + 40))
+            else:
+                no_unit_text = font.render("No unit selected", True, (255, 255, 255))
+                screen.blit(no_unit_text, (panel_x + 10, panel_y + 10))
+
+            # Buttons
+            button_width = 100
+            button_height = 100
+            button_y = game_map.shape[0] * cell_size + 75
+
+            # Define buttons
+            end_button = pygame.Rect(width - 240, game_map.shape[0] * cell_size + 65, 100, 50)
             pygame.draw.rect(screen, (200, 0, 0), end_button)
             end_text = font.render("End Turn", True, (255, 255, 255))
-            screen.blit(end_text, (width - 230, game_map.shape[0] * cell_size + 35))
+            screen.blit(end_text, (width - 230, game_map.shape[0] * cell_size + 80))
 
-            reset_button = pygame.Rect(width - 120, game_map.shape[0] * cell_size + 20, 100, 50)
+            reset_button = pygame.Rect(width - 120, game_map.shape[0] * cell_size + 65, 100, 50)
             pygame.draw.rect(screen, (0, 0, 200), reset_button)
             reset_text = font.render("Reset", True, (255, 255, 255))
-            screen.blit(reset_text, (width - 110, game_map.shape[0] * cell_size + 35))
+            screen.blit(reset_text, (width - 110, game_map.shape[0] * cell_size + 80))
 
-            move_button = pygame.Rect(width - 360, game_map.shape[0] * cell_size + 20, 100, 50)
-            pygame.draw.rect(screen, (0, 200, 0) if mode == "move" else (100, 100, 100), move_button)
+            move_button = pygame.Rect(width - 460, game_map.shape[0] * cell_size + 65, 100, 50)
+            pygame.draw.rect(screen, (31, 150, 80) if mode == "move" else (50, 50, 50), move_button)
             move_text = font.render("Move", True, (255, 255, 255))
-            screen.blit(move_text, (width - 350, game_map.shape[0] * cell_size + 35))
+            screen.blit(move_text, (width - 450, game_map.shape[0] * cell_size + 80))
 
-            attack_button = pygame.Rect(width - 480, game_map.shape[0] * cell_size + 20, 100, 50)
-            pygame.draw.rect(screen, (200, 0, 0) if mode == "attack" else (100, 100, 100), attack_button)
+            attack_button = pygame.Rect(width - 360, game_map.shape[0] * cell_size + 65, 100, 50)
+            pygame.draw.rect(screen, (200, 0, 0) if mode == "attack" else (50, 50, 50), attack_button)
             attack_text = font.render("Attack", True, (255, 255, 255))
-            screen.blit(attack_text, (width - 470, game_map.shape[0] * cell_size + 35))
+            screen.blit(attack_text, (width - 350, game_map.shape[0] * cell_size + 80))
 
             return end_button, reset_button, move_button, attack_button
 
@@ -255,9 +288,14 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                     print(f"Move error: {e}")
                 return
 
-            if selected_unit and mode == "attack" and clicked_pos in legal_attacks:
-                print(f"Attacking position: {clicked_pos}")
-                # Implement attack logic here
+            if selected_unit and mode == "attack":
+                if clicked_pos in legal_attacks:
+                    print(f"Attacking position: {clicked_pos}")
+                    # Implement attack logic here
+                elif not legal_attacks:
+                    display_no_targets_message()
+                    mode = "move"
+                    legal_moves = calculate_legal_moves(selected_unit, game_map, MOVEMENT_COSTS, unit_positions)
                 return
 
             for unit_id, unit in unit_positions.items():
@@ -270,12 +308,31 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                     elif mode == "attack":
                         legal_attacks = calculate_legal_attacks(selected_unit, game_map, unit_positions)
                         legal_moves = {}
+                        if not legal_attacks:
+                            display_no_targets_message()
+                            mode = "move"
+                            legal_moves = calculate_legal_moves(selected_unit, game_map, MOVEMENT_COSTS, unit_positions)
                     return
 
-            # Deselect if clicking elsewhere
-            selected_unit = None
+            selected_unit = None # Deselect if clicking elsewhere
             legal_moves = {}
             legal_attacks = set()
+
+        def display_no_targets_message():
+            message_text = font.render("No targets in range", True, (255, 0, 0))
+            text_rect = message_text.get_rect(center=(width // 2, height // 2 - 50))
+            screen.blit(message_text, text_rect)
+            pygame.display.update()
+            pygame.time.delay(1000)
+
+        def display_select_unit_message():
+            message_text = font.render("Select unit first", True, (255, 0, 0))
+            text_rect = message_text.get_rect(center=(width // 2, height // 2 - 50))
+            screen.blit(message_text, text_rect)
+            pygame.display.update()
+            pygame.time.delay(1000)
+            if selected_unit:
+                legal_moves = calculate_legal_moves(selected_unit, game_map, MOVEMENT_COSTS, unit_positions)
 
         def display_hover_info(pos):
             col, row = pos[0] // cell_size, pos[1] // cell_size
@@ -284,14 +341,13 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
             for unit in unit_positions.values():
                 if unit.position == hover_pos:
                     unit_info = font.render(
-                        f"{unit.name} (HP: {unit.hp}, Move: {unit.moves_remaining}, Terrain: {unit.terrain})",
+                        f"{unit.name} (HP: {unit.hp})",
                         True, (255, 255, 255)
                     )
                     screen.blit(unit_info, (pos[0] + 10, pos[1] + 10))
                     return
 
-        # Main game loop
-        while running:
+        while running:          # Main game loop
             screen.fill((0, 0, 0))
             draw_map()
             end_button, reset_button, move_button, attack_button = draw_ui()
@@ -315,10 +371,20 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                                                             unit_positions) if selected_unit else {}
                         legal_attacks = set()
                     elif attack_button.collidepoint(event.pos):
-                        mode = "attack"
-                        legal_attacks = calculate_legal_attacks(selected_unit, game_map,
-                                                                unit_positions) if selected_unit else set()
-                        legal_moves = {}
+                        if selected_unit:
+                            mode = "attack"
+                            legal_attacks = calculate_legal_attacks(selected_unit, game_map,
+                                                                    unit_positions) if selected_unit else set()
+                            legal_moves = {}
+                            if not legal_attacks:
+                                display_no_targets_message()
+                                mode = "move"
+                                legal_moves = calculate_legal_moves(selected_unit, game_map, MOVEMENT_COSTS, unit_positions)
+                        else:
+                            display_select_unit_message()
+                            mode = "move"
+                            if selected_unit:
+                                legal_moves = calculate_legal_moves(selected_unit, game_map, MOVEMENT_COSTS, unit_positions)
                     else:
                         handle_click(event.pos)
 
@@ -328,8 +394,7 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
         pygame.quit()
 
 
-# Example Usage
-if __name__ == "__main__":
+if __name__ == "__main__":  # Example Usage
     faction_file = "factions.json"
 
     terrain_weights = {
@@ -355,11 +420,6 @@ if __name__ == "__main__":
     unit_positions = place_units_on_map(terrain_map, army1, army2)
     print("Initial Map:")
     render_combined_map(terrain_map, unit_positions)
-
-    print("\nMoving Scout1 to (1, 1):")
-    move_unit("A1_0", (1, 1), unit_positions, terrain_map, movement_costs=MOVEMENT_COSTS)
-    render_combined_map(terrain_map, unit_positions)
-    print(unit_positions)
 
     display_game_with_pygame(
         game_map=terrain_map,
