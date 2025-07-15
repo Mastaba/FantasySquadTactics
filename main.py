@@ -238,7 +238,7 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
     pygame.init()
     cell_size = 80
     width = game_map.shape[1] * cell_size
-    height = game_map.shape[0] * cell_size + 200
+    height = game_map.shape[0] * cell_size + 250  # Increased height for ability description
 
     # Initialize ability system
     ability_system = SpecialAbilitySystem()
@@ -397,40 +397,42 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                     screen.blit(hp_bg, (col * cell_size + cell_size - hp_text.get_width() - 6, row * cell_size + 2))
                     screen.blit(hp_text, (col * cell_size + cell_size - hp_text.get_width() - 4, row * cell_size + 3))
 
-                    # Draw attack status indicator (bottom-left corner)
-                    try:
-                        if piece.has_attacked:
-                            attack_icon = pygame.image.load("graphics/attack-done.png").convert_alpha()
-                        else:
-                            attack_icon = pygame.image.load("graphics/attack-available.png").convert_alpha()
-                        screen.blit(attack_icon, (col * cell_size + 2, row * cell_size + cell_size - 17))
-                    except FileNotFoundError:
-                        # Fallback to colored squares if images not found
-                        attack_indicator = pygame.Surface((15, 15))
-                        if piece.has_attacked:
-                            attack_indicator.fill((255, 0, 0))  # Red for used attack
-                        else:
-                            attack_indicator.fill((0, 255, 0))  # Green for available attack
-                        attack_indicator.set_alpha(180)
-                        screen.blit(attack_indicator, (col * cell_size + 2, row * cell_size + cell_size - 17))
+                    # Draw attack status indicator (bottom-left corner) - only for current player's units
+                    if ((current_turn == 1 and "A1" in piece.unit_id) or (current_turn == 2 and "A2" in piece.unit_id)):
+                        try:
+                            if piece.has_attacked:
+                                attack_icon = pygame.image.load("graphics/attack-done.png").convert_alpha()
+                            else:
+                                attack_icon = pygame.image.load("graphics/attack-available.png").convert_alpha()
+                            screen.blit(attack_icon, (col * cell_size + 2, row * cell_size + cell_size - 17))
+                        except FileNotFoundError:
+                            # Fallback to colored squares if images not found
+                            attack_indicator = pygame.Surface((15, 15))
+                            if piece.has_attacked:
+                                attack_indicator.fill((255, 0, 0))  # Red for used attack
+                            else:
+                                attack_indicator.fill((0, 255, 0))  # Green for available attack
+                            attack_indicator.set_alpha(180)
+                            screen.blit(attack_indicator, (col * cell_size + 2, row * cell_size + cell_size - 17))
 
-                    # Draw move status indicator (bottom-right corner)
-                    try:
-                        if piece.moves_remaining <= 0:
-                            move_icon = pygame.image.load("graphics/move-done.png").convert_alpha()
-                        else:
-                            move_icon = pygame.image.load("graphics/move-available.png").convert_alpha()
-                        screen.blit(move_icon, (col * cell_size + cell_size - 17, row * cell_size + cell_size - 17))
-                    except FileNotFoundError:
-                        # Fallback to colored squares if images not found
-                        move_indicator = pygame.Surface((15, 15))
-                        if piece.moves_remaining <= 0:
-                            move_indicator.fill((255, 0, 0))  # Red for no moves left
-                        else:
-                            move_indicator.fill((0, 255, 0))  # Green for moves available
-                        move_indicator.set_alpha(180)
-                        screen.blit(move_indicator,
-                                    (col * cell_size + cell_size - 17, row * cell_size + cell_size - 17))
+                    # Draw move status indicator (bottom-right corner) - only for current player's units
+                    if ((current_turn == 1 and "A1" in piece.unit_id) or (current_turn == 2 and "A2" in piece.unit_id)):
+                        try:
+                            if piece.moves_remaining <= 0:
+                                move_icon = pygame.image.load("graphics/move-done.png").convert_alpha()
+                            else:
+                                move_icon = pygame.image.load("graphics/move-available.png").convert_alpha()
+                            screen.blit(move_icon, (col * cell_size + cell_size - 17, row * cell_size + cell_size - 17))
+                        except FileNotFoundError:
+                            # Fallback to colored squares if images not found
+                            move_indicator = pygame.Surface((15, 15))
+                            if piece.moves_remaining <= 0:
+                                move_indicator.fill((255, 0, 0))  # Red for no moves left
+                            else:
+                                move_indicator.fill((0, 255, 0))  # Green for moves available
+                            move_indicator.set_alpha(180)
+                            screen.blit(move_indicator,
+                                        (col * cell_size + cell_size - 17, row * cell_size + cell_size - 17))
 
                 except FileNotFoundError:
                     print(f"Missing graphic for {piece.unit_class} in faction {faction}: {tile_path}")
