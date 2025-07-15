@@ -1,9 +1,13 @@
 import pygame
 from game_classes import GamePiece
 from populate import generate_game_map, build_random_armies, place_units_on_map
+import math
+
 selected_tile = None
 
-MOVEMENT_COSTS = {"Plains": 1, "Forest": 2, "Mountain": 3, "Lake": float('inf'), "River": 3, "Farm": 1, "Village": 1, "City": 2}
+MOVEMENT_COSTS = {"Plains": 1, "Forest": 2, "Mountain": 3, "Lake": float('inf'), "River": 3, "Farm": 1, "Village": 1,
+                  "City": 2}
+
 
 def move_unit(unit_id, new_position, unit_positions, terrain_map, movement_costs):
     row, col = new_position
@@ -24,17 +28,94 @@ def move_unit(unit_id, new_position, unit_positions, terrain_map, movement_costs
     unit.terrain = terrain
     unit_positions[unit_id] = unit
 
+
+def attack_unit(attacker_id, target_position, unit_positions, terrain_map):
+    """
+    Performs an attack from attacker to target at target_position.
+    Returns a dictionary with attack results for UI feedback.
+    """
+    attacker = unit_positions[attacker_id]
+
+    # Check if unit has already attacked this turn
+    if attacker.has_attacked:
+        raise ValueError("Unit has already attacked this turn")
+
+    # Find the target unit at the given position
+    target = None
+    target_id = None
+    for uid, unit in unit_positions.items():
+        if unit.position == target_position:
+            target = unit
+            target_id = uid
+            break
+
+    if not target:
+        raise ValueError("No target found at specified position")
+
+    if target.faction == attacker.faction:
+        raise ValueError("Cannot attack friendly units")
+
+    # Calculate base damage
+    base_damage = attacker.atk
+
+    # Apply terrain modifiers
+    attacker_terrain = terrain_map[attacker.position[0], attacker.position[1]]
+    target_terrain = terrain_map[target.position[0], target.position[1]]
+
+    # Mountain bonus: +1 damage when attacking from mountain
+    damage_bonus = 0
+    if attacker_terrain == "Mountain" and target_terrain != "Mountain":
+        damage_bonus += 1
+
+    # Forest defense: reduce incoming damage by 1 (minimum 1 damage)
+    damage_reduction = 0
+    if target_terrain == "Forest":
+        damage_reduction += 1
+
+    final_damage = max(1, base_damage + damage_bonus - damage_reduction)
+
+    # Apply damage
+    target.hp -= final_damage
+
+    # Mark attacker as having attacked
+    attacker.has_attacked = True
+
+    # Calculate if this is a ranged attack (distance > 1)
+    distance = max(abs(attacker.position[0] - target.position[0]),
+                   abs(attacker.position[1] - target.position[1]))
+    is_ranged = distance > 1
+
+    # Prepare result info
+    result = {
+        "attacker": attacker.name,
+        "target": target.name,
+        "damage": final_damage,
+        "target_remaining_hp": target.hp,
+        "target_defeated": target.hp <= 0,
+        "terrain_bonus": damage_bonus,
+        "terrain_reduction": damage_reduction,
+        "is_ranged": is_ranged,
+        "attacker_pos": attacker.position,
+        "target_pos": target.position
+    }
+
+    # Remove defeated unit
+    if target.hp <= 0:
+        del unit_positions[target_id]
+
+    return result
+
+
 def calculate_legal_moves(unit, terrain_map, movement_costs, unit_positions):
     height, width = terrain_map.shape
     legal_moves = {}
-    to_visit = [(unit.position, unit.moves_remaining)]  # (current position, remaining movement)
+    to_visit = [(unit.position, unit.moves_remaining)]
     occupied_positions = {u.position for u in unit_positions.values() if u != unit}
 
     while to_visit:
         current_pos, remaining_move = to_visit.pop()
         move_cost = unit.moves_remaining - remaining_move
 
-        # Exclude the unit's current position
         if current_pos != unit.position and (current_pos not in legal_moves or move_cost < legal_moves[current_pos]):
             legal_moves[current_pos] = move_cost
 
@@ -44,9 +125,9 @@ def calculate_legal_moves(unit, terrain_map, movement_costs, unit_positions):
             new_pos = (new_row, new_col)
 
             if (
-                0 <= new_row < height
-                and 0 <= new_col < width
-                and new_pos not in occupied_positions
+                    0 <= new_row < height
+                    and 0 <= new_col < width
+                    and new_pos not in occupied_positions
             ):
                 terrain = terrain_map[new_row, new_col]
                 cost = movement_costs.get(terrain, float('inf'))
@@ -57,22 +138,43 @@ def calculate_legal_moves(unit, terrain_map, movement_costs, unit_positions):
     return legal_moves
 
 
+def calculate_effective_range(unit, terrain_map):
+    """Calculate the effective range of a unit based on terrain and special abilities."""
+    base_range = unit.range
+    attacker_terrain = terrain_map[unit.position[0], unit.position[1]]
+
+    # Mountain gives +1 range
+    if attacker_terrain == "Mountain":
+        return base_range + 1
+
+    return base_range
+
+
 def calculate_legal_attacks(unit, terrain_map, unit_positions):
+    # Can't attack if already attacked this turn
+    if unit.has_attacked:
+        return set()
 
     height, width = terrain_map.shape
     legal_attacks = set()
     row, col = unit.position
 
-    for dr in range(-unit.range, unit.range + 1):
-        for dc in range(-unit.range, unit.range + 1):
+    effective_range = calculate_effective_range(unit, terrain_map)
+
+    for dr in range(-effective_range, effective_range + 1):
+        for dc in range(-effective_range, effective_range + 1):
             new_row, new_col = row + dr, col + dc
             if 0 <= new_row < height and 0 <= new_col < width and (dr != 0 or dc != 0):
-                target_pos = (new_row, new_col)
-                for target in unit_positions.values():
-                    if target.position == target_pos and target.faction != unit.faction:
-                        legal_attacks.add(target_pos)
+                distance = max(abs(dr), abs(dc))
+
+                if distance <= effective_range:
+                    target_pos = (new_row, new_col)
+                    for target in unit_positions.values():
+                        if target.position == target_pos and target.faction != unit.faction:
+                            legal_attacks.add(target_pos)
 
     return legal_attacks
+
 
 def render_combined_map(terrain_map, unit_positions):
     combined_map = terrain_map.copy()
@@ -84,12 +186,13 @@ def render_combined_map(terrain_map, unit_positions):
     for row in combined_map:
         print(" ".join(row))
 
+
 def display_game_with_pygame(game_map, unit_positions, faction_file, map_height, map_width, terrain_weights,
                              army_points):
     pygame.init()
-    cell_size = 80  # Adjusted for tile size
+    cell_size = 80
     width = game_map.shape[1] * cell_size
-    height = game_map.shape[0] * cell_size + 200  # Extra space for UI
+    height = game_map.shape[0] * cell_size + 200
 
     try:
         screen = pygame.display.set_mode((width, height))
@@ -108,16 +211,24 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
         }
 
         font = pygame.font.Font('IMFellEnglishSC-Regular.ttf', 24)
+        small_font = pygame.font.Font('IMFellEnglishSC-Regular.ttf', 18)
         current_turn = 1
         running = True
 
         selected_unit = None
         legal_moves = {}
         legal_attacks = set()
-        mode = "move"  # New mode state
+        mode = "move"
+
+        # Combat feedback variables
+        last_attack_result = None
+        attack_message_timer = 0
+
+        # Animation variables
+        projectile_animations = []
 
         def reset_game():
-            nonlocal game_map, unit_positions
+            nonlocal game_map, unit_positions, selected_unit, legal_moves, legal_attacks, last_attack_result, projectile_animations
             armies = build_random_armies(faction_file, army_points=army_points)
             army1 = armies["faction1"]["army"]
             army2 = armies["faction2"]["army"]
@@ -136,15 +247,39 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                 orient="north-south"
             )
 
+            selected_unit = None
+            legal_moves = {}
+            legal_attacks = set()
+            last_attack_result = None
+            projectile_animations = []
+
         def end_turn():
-            nonlocal current_turn, selected_unit, legal_moves, legal_attacks
+            nonlocal current_turn, selected_unit, legal_moves, legal_attacks, last_attack_result, projectile_animations
             current_turn = 2 if current_turn == 1 else 1
             selected_unit = None
             legal_moves = {}
             legal_attacks = set()
+            last_attack_result = None
+            projectile_animations = []
+
+            # Reset movement and attack status for current player's units
             for unit in unit_positions.values():
                 if (current_turn == 1 and "A1" in unit.unit_id) or (current_turn == 2 and "A2" in unit.unit_id):
                     unit.moves_remaining = unit.move
+                    unit.has_attacked = False
+
+                # Apply healing for units on farms
+                if unit.terrain == "Farm":
+                    max_hp = get_max_hp_for_unit(unit)
+                    if unit.hp < max_hp:
+                        unit.hp = min(unit.hp + 1, max_hp)
+
+        def get_max_hp_for_unit(unit):
+            """Get the original max HP for a unit by looking up its stats."""
+            max_hp_by_class = {
+                "Scout": 7, "Ranger": 10, "Melee": 15, "Heavy": 22, "Artillery": 12, "Leader": 24
+            }
+            return max_hp_by_class.get(unit.unit_class, unit.hp)
 
         def draw_map():
             for row in range(game_map.shape[0]):
@@ -152,37 +287,34 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                     terrain = game_map[row, col]
                     tile = terrain_tiles.get(terrain, None)
                     if tile:
-                        # Apply a background fill behind the map tiles
                         background = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
-                        background.fill((0, 175, 0, 128))  # #739735 with 50% alpha
+                        background.fill((0, 175, 0, 128))
                         screen.blit(background, (col * cell_size, row * cell_size))
                         screen.blit(tile, (col * cell_size, row * cell_size))
 
                     if (row, col) in legal_moves:
                         pygame.draw.rect(
                             screen, (255, 255, 0),
-                            (col * cell_size +2 , row * cell_size +2, cell_size -4, cell_size -4),
-                            width=2  # Border width for yellow box
+                            (col * cell_size + 2, row * cell_size + 2, cell_size - 4, cell_size - 4),
+                            width=2
                         )
-                        # Draw the movement cost in the top-left corner
-                        move_cost_text = font.render(str(legal_moves[(row, col)]), True, (0, 0, 0))
+                        move_cost_text = small_font.render(str(legal_moves[(row, col)]), True, (0, 0, 0))
                         screen.blit(move_cost_text, (col * cell_size + 5, row * cell_size + 5))
 
                     if (row, col) in legal_attacks:
                         pygame.draw.rect(
                             screen, (255, 0, 0),
                             (col * cell_size, row * cell_size, cell_size, cell_size),
-                            width=3  # Border width for red box
+                            width=3
                         )
 
             for piece in unit_positions.values():
                 row, col = piece.position
-                faction = piece.faction.replace(" ", "_")  # Replace spaces with underscores for folder paths
+                faction = piece.faction.replace(" ", "_")
                 tile_path = f"graphics/{faction}/{piece.unit_class.lower()}.png"
 
                 try:
                     tile = pygame.image.load(tile_path).convert_alpha()
-                    # Apply a background fill behind the unit tiles
                     background = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
                     if piece == selected_unit:
                         pygame.draw.circle(
@@ -194,21 +326,78 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                         )
                     screen.blit(background, (col * cell_size, row * cell_size))
                     screen.blit(tile, (col * cell_size, row * cell_size))
+
+                    # Draw HP indicator
+                    hp_text = small_font.render(str(piece.hp), True, (255, 255, 255))
+                    hp_bg = pygame.Surface((hp_text.get_width() + 4, hp_text.get_height() + 2))
+                    hp_bg.fill((0, 0, 0))
+                    hp_bg.set_alpha(128)
+                    screen.blit(hp_bg, (col * cell_size + cell_size - hp_text.get_width() - 6, row * cell_size + 2))
+                    screen.blit(hp_text, (col * cell_size + cell_size - hp_text.get_width() - 4, row * cell_size + 3))
+
+                    # Draw attack status indicator (bottom-left corner)
+                    try:
+                        if piece.has_attacked:
+                            attack_icon = pygame.image.load("graphics/attack-done.png").convert_alpha()
+                        else:
+                            attack_icon = pygame.image.load("graphics/attack-available.png").convert_alpha()
+                        screen.blit(attack_icon, (col * cell_size + 2, row * cell_size + cell_size - 17))
+                    except FileNotFoundError:
+                        # Fallback to colored squares if images not found
+                        attack_indicator = pygame.Surface((15, 15))
+                        if piece.has_attacked:
+                            attack_indicator.fill((255, 0, 0))  # Red for used attack
+                        else:
+                            attack_indicator.fill((0, 255, 0))  # Green for available attack
+                        attack_indicator.set_alpha(180)
+                        screen.blit(attack_indicator, (col * cell_size + 2, row * cell_size + cell_size - 17))
+
+                    # Draw move status indicator (bottom-right corner)
+                    try:
+                        if piece.moves_remaining <= 0:
+                            move_icon = pygame.image.load("graphics/move-done.png").convert_alpha()
+                        else:
+                            move_icon = pygame.image.load("graphics/move-available.png").convert_alpha()
+                        screen.blit(move_icon, (col * cell_size + cell_size - 17, row * cell_size + cell_size - 17))
+                    except FileNotFoundError:
+                        # Fallback to colored squares if images not found
+                        move_indicator = pygame.Surface((15, 15))
+                        if piece.moves_remaining <= 0:
+                            move_indicator.fill((255, 0, 0))  # Red for no moves left
+                        else:
+                            move_indicator.fill((0, 255, 0))  # Green for moves available
+                        move_indicator.set_alpha(180)
+                        screen.blit(move_indicator,
+                                    (col * cell_size + cell_size - 17, row * cell_size + cell_size - 17))
+
                 except FileNotFoundError:
                     print(f"Missing graphic for {piece.unit_class} in faction {faction}: {tile_path}")
 
-        import os
+            # Draw projectile animations
+            for projectile in projectile_animations[:]:
+                projectile['progress'] += projectile['speed']
+
+                if projectile['progress'] >= 1.0:
+                    projectile_animations.remove(projectile)
+                else:
+                    start_x = projectile['start'][1] * cell_size + cell_size // 2
+                    start_y = projectile['start'][0] * cell_size + cell_size // 2
+                    end_x = projectile['end'][1] * cell_size + cell_size // 2
+                    end_y = projectile['end'][0] * cell_size + cell_size // 2
+
+                    current_x = start_x + (end_x - start_x) * projectile['progress']
+                    current_y = start_y + (end_y - start_y) * projectile['progress']
+
+                    pygame.draw.circle(screen, projectile['color'], (int(current_x), int(current_y)), 6)
+                    pygame.draw.circle(screen, (255, 255, 255), (int(current_x), int(current_y)), 6, 2)
 
         def draw_ui():
-            # Background for UI
             pygame.draw.rect(screen, (50, 50, 50), (0, game_map.shape[0] * cell_size + 75, width, 100))
 
-            # Player turn
             large_font = pygame.font.Font('IMFellEnglishSC-Regular.ttf', 35)
             turn_text = large_font.render(f"Player {current_turn}'s Turn", True, (200, 200, 200))
             screen.blit(turn_text, (width // 2 - turn_text.get_width() // 2, game_map.shape[0] * cell_size + 10))
 
-            # Selected unit panel
             panel_x = 20
             panel_y = game_map.shape[0] * cell_size + 65
             panel_width = 300
@@ -220,38 +409,32 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                 unit_name_text = font.render(selected_unit.name, True, (255, 255, 255))
                 unit_stats_text = font.render(f"HP: {selected_unit.hp}  Range: {selected_unit.range}", True,
                                               (255, 255, 255))
+                unit_move_text = font.render(f"Moves: {selected_unit.moves_remaining}/{selected_unit.move}", True,
+                                             (255, 255, 255))
+                unit_attack_text = font.render(f"Attacked: {'Yes' if selected_unit.has_attacked else 'No'}", True,
+                                               (255, 0, 0) if selected_unit.has_attacked else (0, 255, 0))
 
-                # Display unit icon if available
                 faction = selected_unit.faction.replace(" ", "_")
                 unit_icon_path = f"graphics/{faction}/{selected_unit.unit_class.lower()}.png"
 
                 try:
-                    if os.path.exists(unit_icon_path):
-                        unit_icon = pygame.image.load(unit_icon_path).convert_alpha()
-                    else:
-                        raise FileNotFoundError(f"Missing graphic: {unit_icon_path}")
+                    unit_icon = pygame.image.load(unit_icon_path).convert_alpha()
                 except FileNotFoundError:
-                    print(
-                        f"Missing graphic for {selected_unit.unit_class} in faction {selected_unit.faction}. Using placeholder.")
                     unit_icon = pygame.image.load("graphics/placeholder.png").convert_alpha()
 
                 icon_size = (50, 50)
                 unit_icon = pygame.transform.scale(unit_icon, icon_size)
                 screen.blit(unit_icon, (panel_x + 10, panel_y + 15))
 
-                # Display text next to icon
                 screen.blit(unit_name_text, (panel_x + 70, panel_y + 10))
                 screen.blit(unit_stats_text, (panel_x + 70, panel_y + 40))
+                screen.blit(unit_move_text, (panel_x + 70, panel_y + 65))
+                screen.blit(unit_attack_text, (panel_x + 70, panel_y + 90))
             else:
                 no_unit_text = font.render("No unit selected", True, (255, 255, 255))
                 screen.blit(no_unit_text, (panel_x + 10, panel_y + 10))
 
             # Buttons
-            button_width = 100
-            button_height = 100
-            button_y = game_map.shape[0] * cell_size + 75
-
-            # Define buttons
             end_button = pygame.Rect(width - 240, game_map.shape[0] * cell_size + 65, 100, 50)
             pygame.draw.rect(screen, (200, 0, 0), end_button)
             end_text = font.render("End Turn", True, (255, 255, 255))
@@ -272,67 +455,89 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
             attack_text = font.render("Attack", True, (255, 255, 255))
             screen.blit(attack_text, (width - 350, game_map.shape[0] * cell_size + 80))
 
+            # Display attack result if available
+            if last_attack_result and attack_message_timer > 0:
+                result_text = f"{last_attack_result['attacker']} attacks {last_attack_result['target']} for {last_attack_result['damage']} damage!"
+                if last_attack_result['target_defeated']:
+                    result_text += f" {last_attack_result['target']} defeated!"
+
+                result_surface = small_font.render(result_text, True, (255, 255, 0))
+                result_rect = result_surface.get_rect(center=(width // 2, game_map.shape[0] * cell_size + 45))
+
+                bg_rect = result_rect.inflate(10, 5)
+                pygame.draw.rect(screen, (0, 0, 0), bg_rect)
+                pygame.draw.rect(screen, (255, 255, 0), bg_rect, 2)
+
+                screen.blit(result_surface, result_rect)
+
             return end_button, reset_button, move_button, attack_button
 
         def handle_click(pos):
-            nonlocal selected_unit, legal_moves, legal_attacks, mode
+            nonlocal selected_unit, legal_moves, legal_attacks, mode, last_attack_result, attack_message_timer, projectile_animations
             col, row = pos[0] // cell_size, pos[1] // cell_size
             clicked_pos = (row, col)
 
+            # Handle movement
             if selected_unit and mode == "move" and clicked_pos in legal_moves:
                 try:
                     move_unit(selected_unit.unit_id, clicked_pos, unit_positions, game_map, MOVEMENT_COSTS)
-                    selected_unit.moves_remaining -= legal_moves[clicked_pos]  # Deduct movement cost
+                    selected_unit.moves_remaining -= legal_moves[clicked_pos]
                     legal_moves = calculate_legal_moves(selected_unit, game_map, MOVEMENT_COSTS, unit_positions)
                 except ValueError as e:
                     print(f"Move error: {e}")
                 return
 
+            # Handle attacks
             if selected_unit and mode == "attack":
                 if clicked_pos in legal_attacks:
-                    print(f"Attacking position: {clicked_pos}")
-                    # Implement attack logic here
-                elif not legal_attacks:
-                    display_no_targets_message()
-                    mode = "move"
-                    legal_moves = calculate_legal_moves(selected_unit, game_map, MOVEMENT_COSTS, unit_positions)
+                    try:
+                        last_attack_result = attack_unit(selected_unit.unit_id, clicked_pos, unit_positions, game_map)
+                        attack_message_timer = 180
+                        print(f"Attack result: {last_attack_result}")
+
+                        # Create projectile animation for ranged attacks
+                        if last_attack_result['is_ranged']:
+                            projectile_color = (255, 255, 0)  # Default yellow
+                            if selected_unit.unit_class == "Ranger":
+                                projectile_color = (139, 69, 19)  # Brown for arrows
+                            elif selected_unit.unit_class == "Artillery":
+                                projectile_color = (255, 100, 0)  # Orange for siege weapons
+
+                            projectile_animations.append({
+                                'start': last_attack_result['attacker_pos'],
+                                'end': last_attack_result['target_pos'],
+                                'progress': 0.0,
+                                'speed': 0.15,
+                                'color': projectile_color
+                            })
+
+                        legal_attacks = calculate_legal_attacks(selected_unit, game_map, unit_positions)
+
+                    except ValueError as e:
+                        print(f"Attack error: {e}")
                 return
 
+            # Handle unit selection
             for unit_id, unit in unit_positions.items():
                 if unit.position == clicked_pos and (
                         (current_turn == 1 and "A1" in unit.unit_id) or (current_turn == 2 and "A2" in unit.unit_id)):
                     selected_unit = unit
+                    # If clicking on another unit while in attack mode, switch to move mode
+                    if mode == "attack":
+                        mode = "move"
+
                     if mode == "move":
                         legal_moves = calculate_legal_moves(selected_unit, game_map, MOVEMENT_COSTS, unit_positions)
                         legal_attacks = set()
                     elif mode == "attack":
                         legal_attacks = calculate_legal_attacks(selected_unit, game_map, unit_positions)
                         legal_moves = {}
-                        if not legal_attacks:
-                            display_no_targets_message()
-                            mode = "move"
-                            legal_moves = calculate_legal_moves(selected_unit, game_map, MOVEMENT_COSTS, unit_positions)
                     return
 
-            selected_unit = None # Deselect if clicking elsewhere
+            # Deselect if clicking elsewhere
+            selected_unit = None
             legal_moves = {}
             legal_attacks = set()
-
-        def display_no_targets_message():
-            message_text = font.render("No targets in range", True, (255, 0, 0))
-            text_rect = message_text.get_rect(center=(width // 2, height // 2 - 50))
-            screen.blit(message_text, text_rect)
-            pygame.display.update()
-            pygame.time.delay(1000)
-
-        def display_select_unit_message():
-            message_text = font.render("Select unit first", True, (255, 0, 0))
-            text_rect = message_text.get_rect(center=(width // 2, height // 2 - 50))
-            screen.blit(message_text, text_rect)
-            pygame.display.update()
-            pygame.time.delay(1000)
-            if selected_unit:
-                legal_moves = calculate_legal_moves(selected_unit, game_map, MOVEMENT_COSTS, unit_positions)
 
         def display_hover_info(pos):
             col, row = pos[0] // cell_size, pos[1] // cell_size
@@ -340,20 +545,22 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
 
             for unit in unit_positions.values():
                 if unit.position == hover_pos:
-                    unit_info = font.render(
-                        f"{unit.name} (HP: {unit.hp})",
-                        True, (255, 255, 255)
-                    )
+                    unit_info = font.render(f"{unit.name} (HP: {unit.hp})", True, (255, 255, 255))
                     screen.blit(unit_info, (pos[0] + 10, pos[1] + 10))
                     return
 
-        while running:          # Main game loop
+        # Main game loop
+        while running:
             screen.fill((0, 0, 0))
             draw_map()
             end_button, reset_button, move_button, attack_button = draw_ui()
 
             mouse_pos = pygame.mouse.get_pos()
             display_hover_info(mouse_pos)
+
+            # Update timers and animations
+            if attack_message_timer > 0:
+                attack_message_timer -= 1
 
             pygame.display.flip()
 
@@ -367,24 +574,14 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                         reset_game()
                     elif move_button.collidepoint(event.pos):
                         mode = "move"
-                        legal_moves = calculate_legal_moves(selected_unit, game_map, MOVEMENT_COSTS,
-                                                            unit_positions) if selected_unit else {}
+                        if selected_unit:
+                            legal_moves = calculate_legal_moves(selected_unit, game_map, MOVEMENT_COSTS, unit_positions)
                         legal_attacks = set()
                     elif attack_button.collidepoint(event.pos):
+                        mode = "attack"
                         if selected_unit:
-                            mode = "attack"
-                            legal_attacks = calculate_legal_attacks(selected_unit, game_map,
-                                                                    unit_positions) if selected_unit else set()
-                            legal_moves = {}
-                            if not legal_attacks:
-                                display_no_targets_message()
-                                mode = "move"
-                                legal_moves = calculate_legal_moves(selected_unit, game_map, MOVEMENT_COSTS, unit_positions)
-                        else:
-                            display_select_unit_message()
-                            mode = "move"
-                            if selected_unit:
-                                legal_moves = calculate_legal_moves(selected_unit, game_map, MOVEMENT_COSTS, unit_positions)
+                            legal_attacks = calculate_legal_attacks(selected_unit, game_map, unit_positions)
+                        legal_moves = {}
                     else:
                         handle_click(event.pos)
 
@@ -394,7 +591,7 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
         pygame.quit()
 
 
-if __name__ == "__main__":  # Example Usage
+if __name__ == "__main__":
     faction_file = "factions.json"
 
     terrain_weights = {

@@ -12,6 +12,7 @@ class GamePiece:
         self.position = position  # Tuple (row, col)
         self.terrain = terrain  # Type of terrain the unit is on
         self.faction = faction  # Faction name
+        self.has_attacked = False  # Track if unit has attacked this turn
 
     def __repr__(self):
         return f"{self.name} (HP: {self.hp}, Pos: {self.position}, Terrain: {self.terrain}, Moves Remaining: {self.moves_remaining})"

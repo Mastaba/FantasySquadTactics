@@ -4,50 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5b2a07ae-3c8c-4e41-980e-03d36d7318b3" name="Changes" comment="fix">
-      <change afterPath="$PROJECT_DIR$/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/artillery.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/heavy.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/leader.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/melee.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/ranger.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/scout.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="5b2a07ae-3c8c-4e41-980e-03d36d7318b3" name="Changes" comment="attacking toggle added">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/factions.json" beforeDir="false" afterPath="$PROJECT_DIR$/factions.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fantasy squad tactics tileset.afdesign" beforeDir="false" afterPath="$PROJECT_DIR$/fantasy squad tactics tileset.afdesign" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Barbarian_Tribes_of_Yulgor/artillery.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Barbarian_Tribes_of_Yulgor/artillery.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Barbarian_Tribes_of_Yulgor/heavy.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Barbarian_Tribes_of_Yulgor/heavy.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Barbarian_Tribes_of_Yulgor/leader.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Barbarian_Tribes_of_Yulgor/leader.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Barbarian_Tribes_of_Yulgor/melee.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Barbarian_Tribes_of_Yulgor/melee.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Barbarian_Tribes_of_Yulgor/ranger.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Barbarian_Tribes_of_Yulgor/ranger.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Barbarian_Tribes_of_Yulgor/scout.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Barbarian_Tribes_of_Yulgor/scout.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/City.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/City.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Elven_Alliance_of_Eldanor/artillery.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Elven_Alliance_of_Eldanor/artillery.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Elven_Alliance_of_Eldanor/heavy.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Elven_Alliance_of_Eldanor/heavy.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Elven_Alliance_of_Eldanor/leader.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Elven_Alliance_of_Eldanor/leader.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Elven_Alliance_of_Eldanor/melee.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Elven_Alliance_of_Eldanor/melee.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Elven_Alliance_of_Eldanor/ranger.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Elven_Alliance_of_Eldanor/ranger.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Elven_Alliance_of_Eldanor/scout.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Elven_Alliance_of_Eldanor/scout.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Fae_Armies_of_the_Forest_Lords/artillery.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Fae_Armies_of_the_Forest_Lords/artillery.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Fae_Armies_of_the_Forest_Lords/heavy.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Fae_Armies_of_the_Forest_Lords/heavy.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Fae_Armies_of_the_Forest_Lords/leader.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Fae_Armies_of_the_Forest_Lords/leader.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Fae_Armies_of_the_Forest_Lords/melee.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Fae_Armies_of_the_Forest_Lords/melee.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Fae_Armies_of_the_Forest_Lords/ranger.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Fae_Armies_of_the_Forest_Lords/ranger.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Fae_Armies_of_the_Forest_Lords/scout.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Fae_Armies_of_the_Forest_Lords/scout.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Farm.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Farm.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Forest.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Forest.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Kingdom_of_Cantrell/artillery.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Kingdom_of_Cantrell/artillery.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Kingdom_of_Cantrell/heavy.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Kingdom_of_Cantrell/heavy.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Kingdom_of_Cantrell/leader.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Kingdom_of_Cantrell/leader.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Kingdom_of_Cantrell/melee.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Kingdom_of_Cantrell/melee.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Kingdom_of_Cantrell/ranger.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Kingdom_of_Cantrell/ranger.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Kingdom_of_Cantrell/scout.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Kingdom_of_Cantrell/scout.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Lake.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Lake.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Mountain.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Mountain.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Plains.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Plains.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/River.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/River.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/Village.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/Village.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graphics/tileset.png" beforeDir="false" afterPath="$PROJECT_DIR$/graphics/tileset.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/game_classes.py" beforeDir="false" afterPath="$PROJECT_DIR$/game_classes.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -76,22 +35,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.main.executor": "Run",
-    "Python.populate.executor": "Run",
-    "Python.split tileset.executor": "Run",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.populate.executor&quot;: &quot;Run&quot;,
+    &quot;Python.split tileset.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   },
-  "keyToStringList": {
-    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
-      "TEXT"
+  &quot;keyToStringList&quot;: {
+    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
+      &quot;TEXT&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="FantasySquadTactics" />
@@ -180,7 +139,15 @@
       <option name="project" value="LOCAL" />
       <updated>1736979330642</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="attacking toggle added">
+      <option name="closed" value="true" />
+      <created>1737169343295</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1737169343296</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -190,6 +157,7 @@
     <MESSAGE value="misc" />
     <MESSAGE value="graphics addition" />
     <MESSAGE value="fix" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix" />
+    <MESSAGE value="attacking toggle added" />
+    <option name="LAST_COMMIT_MESSAGE" value="attacking toggle added" />
   </component>
 </project>
