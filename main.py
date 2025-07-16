@@ -3,6 +3,8 @@ from game_classes import GamePiece
 from populate import generate_game_map, build_random_armies, place_units_on_map
 from special_abilities import SpecialAbilitySystem, get_unit_effective_range, apply_damage_reductions, \
     get_movement_modifications
+from effects_system import EffectsSystem, apply_effects_to_damage, apply_effects_to_range, apply_effects_to_movement, \
+    apply_effects_to_attack, can_unit_attack
 import math
 
 selected_tile = None
@@ -238,14 +240,15 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
     pygame.init()
     cell_size = 80
     width = game_map.shape[1] * cell_size
-    height = game_map.shape[0] * cell_size + 250  # Increased height for ability description
+    height = game_map.shape[0] * cell_size + 300  # Increased height even more for ability description
 
-    # Initialize ability system
+    # Initialize ability system and effects system
     ability_system = SpecialAbilitySystem()
+    effects_system = EffectsSystem()
 
     try:
         screen = pygame.display.set_mode((width, height))
-        pygame.display.set_caption("Fantasy Squad Tactics")
+        pygame.display.set_caption("Fantasy Squad Tactics @==|========>")  # CHANGED TITLE TO VERIFY UPDATE
 
         # Load graphical tiles
         terrain_tiles = {
@@ -258,6 +261,22 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
             'Village': pygame.image.load('graphics/Village.png').convert_alpha(),
             'City': pygame.image.load('graphics/City.png').convert_alpha()
         }
+
+        # Load UI graphics
+        try:
+            legal_moves_icon = pygame.image.load('graphics/legal-moves.png').convert_alpha()
+        except FileNotFoundError:
+            legal_moves_icon = None  # Fallback to yellow square if image not found
+
+        try:
+            selected_unit_icon = pygame.image.load('graphics/selected-unit.png').convert_alpha()
+        except FileNotFoundError:
+            selected_unit_icon = None  # Fallback to green circle if image not found
+
+        try:
+            blessed_icon = pygame.image.load('graphics/blessed.png').convert_alpha()
+        except FileNotFoundError:
+            blessed_icon = None  # Fallback to yellow dot if image not found
 
         font = pygame.font.Font('IMFellEnglishSC-Regular.ttf', 24)
         small_font = pygame.font.Font('IMFellEnglishSC-Regular.ttf', 18)
@@ -298,6 +317,12 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                 orient="north-south"
             )
 
+            # Remove the test effect code
+            effects_system.unit_effects = {}  # Clear all effects
+            for unit_id, unit in unit_positions.items():
+                effects_system.check_conditional_effects(unit_id, unit, {})
+            effects_system.check_aura_effects(unit_positions, ability_system)
+
             selected_unit = None
             legal_moves = {}
             legal_attacks = set()
@@ -308,6 +333,12 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
 
         def end_turn():
             nonlocal current_turn, selected_unit, legal_moves, legal_attacks, legal_ability_targets, last_attack_result, last_ability_result, projectile_animations
+
+            # Process end-of-turn effects for current player's units
+            for unit_id, unit in unit_positions.items():
+                if (current_turn == 1 and "A1" in unit_id) or (current_turn == 2 and "A2" in unit_id):
+                    effects_system.process_turn_end(unit_id, current_turn)
+
             current_turn = 2 if current_turn == 1 else 1
             selected_unit = None
             legal_moves = {}
@@ -317,17 +348,25 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
             last_ability_result = None
             projectile_animations = []
 
-            # Reset movement and attack status for current player's units
-            for unit in unit_positions.values():
-                if (current_turn == 1 and "A1" in unit.unit_id) or (current_turn == 2 and "A2" in unit.unit_id):
+            # Reset movement and attack status for new current player's units
+            for unit_id, unit in unit_positions.items():
+                if (current_turn == 1 and "A1" in unit_id) or (current_turn == 2 and "A2" in unit_id):
                     unit.moves_remaining = unit.move
                     unit.has_attacked = False
+
+                    # Process start-of-turn effects
+                    effects_system.process_turn_start(unit_id, current_turn)
 
                 # Apply healing for units on farms
                 if unit.terrain == "Farm":
                     max_hp = get_max_hp_for_unit(unit)
                     if unit.hp < max_hp:
                         unit.hp = min(unit.hp + 1, max_hp)
+
+            # Update all conditional and aura effects
+            for unit_id, unit in unit_positions.items():
+                effects_system.check_conditional_effects(unit_id, unit, {})
+            effects_system.check_aura_effects(unit_positions, ability_system)
 
         def get_max_hp_for_unit(unit):
             """Get the original max HP for a unit by looking up its stats."""
@@ -348,11 +387,18 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                         screen.blit(tile, (col * cell_size, row * cell_size))
 
                     if (row, col) in legal_moves:
-                        pygame.draw.rect(
-                            screen, (255, 255, 0),
-                            (col * cell_size + 2, row * cell_size + 2, cell_size - 4, cell_size - 4),
-                            width=2
-                        )
+                        if legal_moves_icon:
+                            # Use the legal-moves.png graphic
+                            screen.blit(legal_moves_icon, (col * cell_size, row * cell_size))
+                        else:
+                            # Fallback to yellow square if image not found
+                            pygame.draw.rect(
+                                screen, (255, 255, 0),
+                                (col * cell_size + 2, row * cell_size + 2, cell_size - 4, cell_size - 4),
+                                width=2
+                            )
+
+                        # Still show move cost number
                         move_cost_text = small_font.render(str(legal_moves[(row, col)]), True, (0, 0, 0))
                         screen.blit(move_cost_text, (col * cell_size + 5, row * cell_size + 5))
 
@@ -379,14 +425,21 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                     tile = pygame.image.load(tile_path).convert_alpha()
                     background = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
                     if piece == selected_unit:
-                        pygame.draw.circle(
-                            background,
-                            (0, 255, 0),
-                            (cell_size // 2, cell_size // 2),
-                            cell_size // 2,
-                            5
-                        )
-                    screen.blit(background, (col * cell_size, row * cell_size))
+                        if selected_unit_icon:
+                            # Use the selected-unit.png graphic
+                            screen.blit(selected_unit_icon, (col * cell_size, row * cell_size))
+                        else:
+                            # Fallback to green circle if image not found
+                            pygame.draw.circle(
+                                background,
+                                (0, 255, 0),
+                                (cell_size // 2, cell_size // 2),
+                                cell_size // 2,
+                                5
+                            )
+                            screen.blit(background, (col * cell_size, row * cell_size))
+                    else:
+                        screen.blit(background, (col * cell_size, row * cell_size))
                     screen.blit(tile, (col * cell_size, row * cell_size))
 
                     # Draw HP indicator
@@ -434,8 +487,19 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                             screen.blit(move_indicator,
                                         (col * cell_size + cell_size - 17, row * cell_size + cell_size - 17))
 
+                    # Draw effects indicator - blessed.png overlay if unit has any effects
+                    if effects_system.has_any_effects(piece.unit_id):
+                        if blessed_icon:
+                            screen.blit(blessed_icon, (col * cell_size, row * cell_size))
+                        else:
+                            # Fallback to yellow dot if image not found
+                            pygame.draw.circle(screen, (255, 255, 0),
+                                               (col * cell_size + cell_size - 8, row * cell_size + 8), 6)
+                            pygame.draw.circle(screen, (0, 0, 0),
+                                               (col * cell_size + cell_size - 8, row * cell_size + 8), 6, 1)
+
                 except FileNotFoundError:
-                    print(f"Missing graphic for {piece.unit_class} in faction {faction}: {tile_path}")
+                    pass
 
             # Draw projectile animations
             for projectile in projectile_animations[:]:
@@ -480,11 +544,23 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                 unit_attack_text = font.render(f"Attacked: {'Yes' if selected_unit.has_attacked else 'No'}", True,
                                                (255, 0, 0) if selected_unit.has_attacked else (0, 255, 0))
 
-                # Show available abilities
+                # Show available abilities with better messaging
                 available_abilities = ability_system.get_available_active_abilities(selected_unit, game_map,
                                                                                     unit_positions)
-                ability_text = "No abilities" if not available_abilities else available_abilities[0]["name"]
-                unit_ability_text = small_font.render(f"Ability: {ability_text}", True, (255, 255, 255))
+                ability_name = selected_unit.special.split(" - ")[
+                    0] if " - " in selected_unit.special else selected_unit.special
+
+                if available_abilities:
+                    ability_text = f"Ability: {ability_name}"
+                else:
+                    # Check if unit has an ability but can't use it right now
+                    ability_info = ability_system.get_ability_info(ability_name)
+                    if ability_info and ability_system.is_active_ability(ability_name):
+                        ability_text = f"Ability: {ability_name} (not currently usable)"
+                    else:
+                        ability_text = f"Ability: {ability_name} (passive)"
+
+                unit_ability_text = small_font.render(ability_text, True, (255, 255, 255))
 
                 faction = selected_unit.faction.replace(" ", "_")
                 unit_icon_path = f"graphics/{faction}/{selected_unit.unit_class.lower()}.png"
@@ -509,7 +585,7 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
 
             # Check if selected unit can move, attack, or use abilities
             can_move = selected_unit and selected_unit.moves_remaining > 0
-            can_attack = selected_unit and not selected_unit.has_attacked
+            can_attack = selected_unit and can_unit_attack(selected_unit, effects_system)
             available_abilities = ability_system.get_available_active_abilities(selected_unit, game_map,
                                                                                 unit_positions) if selected_unit else []
             can_use_ability = len(available_abilities) > 0
@@ -670,10 +746,14 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                 try:
                     move_unit(selected_unit.unit_id, clicked_pos, unit_positions, game_map, MOVEMENT_COSTS)
                     selected_unit.moves_remaining -= legal_moves[clicked_pos]
+
+                    # Update conditional effects after movement
+                    effects_system.check_conditional_effects(selected_unit.unit_id, selected_unit, {})
+
                     legal_moves = calculate_legal_moves(selected_unit, game_map, MOVEMENT_COSTS, unit_positions,
                                                         ability_system)
                 except ValueError as e:
-                    print(f"Move error: {e}")
+                    pass
                 return
 
             # Handle attacks
@@ -683,7 +763,6 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                         last_attack_result = attack_unit(selected_unit.unit_id, clicked_pos, unit_positions, game_map,
                                                          ability_system)
                         attack_message_timer = 180
-                        print(f"Attack result: {last_attack_result}")
 
                         # Create projectile animation for ranged attacks
                         if last_attack_result['is_ranged']:
@@ -704,7 +783,7 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                         legal_attacks = calculate_legal_attacks(selected_unit, game_map, unit_positions, ability_system)
 
                     except ValueError as e:
-                        print(f"Attack error: {e}")
+                        pass
                 return
 
             # Handle ability usage
@@ -721,7 +800,6 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                                 selected_unit, ability_name, target_pos, game_map, unit_positions
                             )
                             attack_message_timer = 180
-                            print(f"Ability result: {last_ability_result}")
 
                             # Refresh legal targets after ability use
                             available_abilities = ability_system.get_available_active_abilities(selected_unit, game_map,
@@ -735,7 +813,7 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                                 legal_ability_targets = set()
 
                     except Exception as e:
-                        print(f"Ability error: {e}")
+                        pass
                 return
 
             # Deselect if clicking elsewhere
@@ -748,12 +826,139 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
             col, row = pos[0] // cell_size, pos[1] // cell_size
             hover_pos = (row, col)
 
+            # Check for mode-specific hover tooltips first
+            if selected_unit:
+                if mode == "move" and hover_pos in legal_moves:
+                    # Show move tooltip
+                    move_cost = legal_moves[hover_pos]
+                    tooltip_text = f"Click to move (Cost: {move_cost})"
+                    tooltip_surface = small_font.render(tooltip_text, True, (255, 255, 255))
+
+                    # Position tooltip
+                    tooltip_x = min(pos[0] + 15, width - tooltip_surface.get_width() - 10)
+                    tooltip_y = max(pos[1] - 30, 10)
+
+                    # Draw tooltip background
+                    tooltip_bg = pygame.Surface((tooltip_surface.get_width() + 10, tooltip_surface.get_height() + 6))
+                    tooltip_bg.fill((40, 40, 40))
+                    tooltip_bg.set_alpha(240)
+                    screen.blit(tooltip_bg, (tooltip_x - 5, tooltip_y - 3))
+
+                    # Draw tooltip border and text
+                    pygame.draw.rect(screen, (255, 255, 0), (
+                    tooltip_x - 5, tooltip_y - 3, tooltip_surface.get_width() + 10, tooltip_surface.get_height() + 6),
+                                     1)
+                    screen.blit(tooltip_surface, (tooltip_x, tooltip_y))
+                    return
+
+                elif mode == "attack" and hover_pos in legal_attacks:
+                    # Show attack tooltip with target unit info
+                    target_unit = None
+                    for unit in unit_positions.values():
+                        if unit.position == hover_pos:
+                            target_unit = unit
+                            break
+
+                    tooltip_lines = ["Click to attack"]
+                    if target_unit:
+                        effective_range = calculate_effective_range(target_unit, game_map, unit_positions,
+                                                                    ability_system)
+                        tooltip_lines.append(f"{target_unit.name} (HP: {target_unit.hp}, Range: {effective_range})")
+
+                        # Add effects if target has any
+                        if effects_system.has_any_effects(target_unit.unit_id):
+                            effect_summary = effects_system.get_effect_summary(target_unit.unit_id)
+                            tooltip_lines.append("Effects:")
+                            tooltip_lines.extend([f"  {effect}" for effect in effect_summary])
+
+                    # Calculate tooltip size
+                    line_height = 18
+                    tooltip_width = max(small_font.size(line)[0] for line in tooltip_lines) + 20
+                    tooltip_height = len(tooltip_lines) * line_height + 10
+
+                    # Position tooltip
+                    tooltip_x = min(pos[0] + 15, width - tooltip_width - 10)
+                    tooltip_y = max(pos[1] - tooltip_height - 15, 10)
+
+                    # Draw tooltip background
+                    tooltip_bg = pygame.Surface((tooltip_width, tooltip_height))
+                    tooltip_bg.fill((40, 40, 40))
+                    tooltip_bg.set_alpha(240)
+                    screen.blit(tooltip_bg, (tooltip_x, tooltip_y))
+
+                    # Draw tooltip border
+                    pygame.draw.rect(screen, (255, 0, 0), (tooltip_x, tooltip_y, tooltip_width, tooltip_height), 2)
+
+                    # Draw tooltip text
+                    for i, line in enumerate(tooltip_lines):
+                        text_surface = small_font.render(line, True, (255, 255, 255))
+                        screen.blit(text_surface, (tooltip_x + 10, tooltip_y + 5 + i * line_height))
+                    return
+
+                elif mode == "ability" and hover_pos in legal_ability_targets:
+                    # Show ability tooltip
+                    available_abilities = ability_system.get_available_active_abilities(selected_unit, game_map,
+                                                                                        unit_positions)
+                    if available_abilities:
+                        ability_name = available_abilities[0]["name"]
+                        tooltip_text = f"Click to use {ability_name}"
+                    else:
+                        tooltip_text = "Click to use ability"
+
+                    tooltip_surface = small_font.render(tooltip_text, True, (255, 255, 255))
+
+                    # Position tooltip
+                    tooltip_x = min(pos[0] + 15, width - tooltip_surface.get_width() - 10)
+                    tooltip_y = max(pos[1] - 30, 10)
+
+                    # Draw tooltip background
+                    tooltip_bg = pygame.Surface((tooltip_surface.get_width() + 10, tooltip_surface.get_height() + 6))
+                    tooltip_bg.fill((40, 40, 40))
+                    tooltip_bg.set_alpha(240)
+                    screen.blit(tooltip_bg, (tooltip_x - 5, tooltip_y - 3))
+
+                    # Draw tooltip border and text
+                    pygame.draw.rect(screen, (128, 0, 255), (
+                    tooltip_x - 5, tooltip_y - 3, tooltip_surface.get_width() + 10, tooltip_surface.get_height() + 6),
+                                     1)
+                    screen.blit(tooltip_surface, (tooltip_x, tooltip_y))
+                    return
+
+            # Check for unit hover (only if not hovering over action targets)
             for unit in unit_positions.values():
                 if unit.position == hover_pos:
+                    # Show unit info with effects merged in
                     effective_range = calculate_effective_range(unit, game_map, unit_positions, ability_system)
-                    unit_info = font.render(f"{unit.name} (HP: {unit.hp}, Range: {effective_range})", True,
-                                            (255, 255, 255))
-                    screen.blit(unit_info, (pos[0] + 10, pos[1] + 10))
+                    tooltip_lines = [f"{unit.name} (HP: {unit.hp}, Range: {effective_range})"]
+
+                    # Add effects if unit has any
+                    if effects_system.has_any_effects(unit.unit_id):
+                        effect_summary = effects_system.get_effect_summary(unit.unit_id)
+                        tooltip_lines.append("Effects:")
+                        tooltip_lines.extend([f"  {effect}" for effect in effect_summary])
+
+                    # Calculate tooltip size
+                    line_height = 18
+                    tooltip_width = max(small_font.size(line)[0] for line in tooltip_lines) + 20
+                    tooltip_height = len(tooltip_lines) * line_height + 10
+
+                    # Position tooltip
+                    tooltip_x = min(pos[0] + 15, width - tooltip_width - 10)
+                    tooltip_y = max(pos[1] - tooltip_height - 15, 10)
+
+                    # Draw tooltip background
+                    tooltip_bg = pygame.Surface((tooltip_width, tooltip_height))
+                    tooltip_bg.fill((40, 40, 40))
+                    tooltip_bg.set_alpha(240)
+                    screen.blit(tooltip_bg, (tooltip_x, tooltip_y))
+
+                    # Draw tooltip border (white for regular unit info)
+                    pygame.draw.rect(screen, (200, 200, 200), (tooltip_x, tooltip_y, tooltip_width, tooltip_height), 2)
+
+                    # Draw tooltip text
+                    for i, line in enumerate(tooltip_lines):
+                        text_surface = small_font.render(line, True, (255, 255, 255))
+                        screen.blit(text_surface, (tooltip_x + 10, tooltip_y + 5 + i * line_height))
                     return
 
         # Main game loop
@@ -761,6 +966,59 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
             screen.fill((0, 0, 0))
             draw_map()
             end_button, reset_button, move_button, attack_button, ability_button, can_move, can_attack, can_use_ability = draw_ui()
+
+            # ABILITY DESCRIPTION - DIRECTLY IN MAIN LOOP SINCE draw_ui() ISN'T WORKING
+            if selected_unit:
+                print(f"Drawing description for {selected_unit.name}")
+
+                # Always show ability description, regardless of availability
+                ability_name = selected_unit.special.split(" - ")[
+                    0] if " - " in selected_unit.special else selected_unit.special
+
+                # Get the full description from the ability system or use the original special text
+                ability_info = ability_system.get_ability_info(ability_name)
+                if ability_info:
+                    ability_description = f"{ability_name}: {ability_info.get('description', selected_unit.special)}"
+                else:
+                    ability_description = selected_unit.special
+
+                print(f"Description: {ability_description}")
+
+                # Draw ability description background
+                desc_lines = []
+                words = ability_description.split()
+                current_line = ""
+                max_width = width - 40  # Leave some margin
+
+                for word in words:
+                    test_line = current_line + (" " if current_line else "") + word
+                    test_surface = small_font.render(test_line, True, (255, 255, 255))
+                    if test_surface.get_width() <= max_width:
+                        current_line = test_line
+                    else:
+                        if current_line:
+                            desc_lines.append(current_line)
+                        current_line = word
+
+                if current_line:
+                    desc_lines.append(current_line)
+
+                print(f"Description lines: {desc_lines}")
+
+                # Calculate description height and position
+                desc_height = max(60, len(desc_lines) * 22 + 15)
+                ability_desc_y = game_map.shape[0] * cell_size + 200  # Position below UI
+
+                # Draw background for description
+                pygame.draw.rect(screen, (80, 80, 120), (20, ability_desc_y, width - 40, desc_height))
+                pygame.draw.rect(screen, (255, 255, 255), (20, ability_desc_y, width - 40, desc_height), 2)
+
+                # Draw description text
+                for i, line in enumerate(desc_lines):
+                    line_surface = small_font.render(line, True, (255, 255, 255))
+                    text_y = ability_desc_y + 8 + i * 22
+                    screen.blit(line_surface, (25, text_y))
+                    print(f"Drawing line {i}: '{line}' at y={text_y}")
 
             mouse_pos = pygame.mouse.get_pos()
             display_hover_info(mouse_pos)
@@ -780,36 +1038,32 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                     elif reset_button.collidepoint(event.pos):
                         reset_game()
                     elif move_button.collidepoint(event.pos):
-                        # Only allow mode change if unit can move or no unit selected
-                        if not selected_unit or can_move:
+                        # Only allow mode change if unit is selected and can move
+                        if selected_unit and can_move:
                             mode = "move"
-                            if selected_unit:
-                                legal_moves = calculate_legal_moves(selected_unit, game_map, MOVEMENT_COSTS,
-                                                                    unit_positions, ability_system)
+                            legal_moves = calculate_legal_moves(selected_unit, game_map, MOVEMENT_COSTS, unit_positions,
+                                                                ability_system)
                             legal_attacks = set()
                             legal_ability_targets = set()
                     elif attack_button.collidepoint(event.pos):
-                        # Only allow mode change if unit can attack or no unit selected
-                        if not selected_unit or can_attack:
+                        # Only allow mode change if unit is selected and can attack
+                        if selected_unit and can_attack:
                             mode = "attack"
-                            if selected_unit:
-                                legal_attacks = calculate_legal_attacks(selected_unit, game_map, unit_positions,
-                                                                        ability_system)
+                            legal_attacks = calculate_legal_attacks(selected_unit, game_map, unit_positions,
+                                                                    ability_system)
                             legal_moves = {}
                             legal_ability_targets = set()
                     elif ability_button.collidepoint(event.pos):
-                        # Only allow mode change if unit can use ability or no unit selected
-                        if not selected_unit or can_use_ability:
+                        # Only allow mode change if unit is selected and can use ability
+                        if selected_unit and can_use_ability:
                             mode = "ability"
-                            if selected_unit:
-                                available_abilities = ability_system.get_available_active_abilities(selected_unit,
-                                                                                                    game_map,
-                                                                                                    unit_positions)
-                                if available_abilities:
-                                    ability_name = available_abilities[0]["name"]
-                                    legal_ability_targets = calculate_legal_ability_targets(
-                                        selected_unit, ability_name, game_map, unit_positions, ability_system
-                                    )
+                            available_abilities = ability_system.get_available_active_abilities(selected_unit, game_map,
+                                                                                                unit_positions)
+                            if available_abilities:
+                                ability_name = available_abilities[0]["name"]
+                                legal_ability_targets = calculate_legal_ability_targets(
+                                    selected_unit, ability_name, game_map, unit_positions, ability_system
+                                )
                             legal_moves = {}
                             legal_attacks = set()
                     else:

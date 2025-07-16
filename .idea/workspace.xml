@@ -5,8 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5b2a07ae-3c8c-4e41-980e-03d36d7318b3" name="Changes" comment="special abilities added">
-      <change afterPath="$PROJECT_DIR$/graphics/move-available.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/move-available.afdesign" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/attack-available.afdesign" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/attack-done.afdesign" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/graphics/attack-available.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/graphics/attack-done.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/graphics/move-done.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/move-done.afdesign" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
@@ -164,7 +168,15 @@
       <option name="project" value="LOCAL" />
       <updated>1752595439834</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="special abilities added">
+      <option name="closed" value="true" />
+      <created>1752612894350</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1752612894350</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
