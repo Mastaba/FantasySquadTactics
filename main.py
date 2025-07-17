@@ -262,6 +262,13 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
             'City': pygame.image.load('graphics/City.png').convert_alpha()
         }
 
+        # Load gameboard background
+        try:
+            gameboard_bg = pygame.image.load('graphics/gameboard.png').convert_alpha()
+            gameboard_bg = pygame.transform.scale(gameboard_bg, (width, game_map.shape[0] * cell_size))
+        except FileNotFoundError:
+            gameboard_bg = None  # Fallback to green if not found
+
         # Load UI graphics
         try:
             legal_moves_icon = pygame.image.load('graphics/legal-moves.png').convert_alpha()
@@ -379,14 +386,16 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
             return max_hp_by_class.get(unit.unit_class, unit.hp)
 
         def draw_map():
+            # Draw gameboard background first
+            if gameboard_bg:
+                screen.blit(gameboard_bg, (0, 0))
+
             for row in range(game_map.shape[0]):
                 for col in range(game_map.shape[1]):
                     terrain = game_map[row, col]
                     tile = terrain_tiles.get(terrain, None)
                     if tile:
-                        background = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
-                        background.fill((0, 175, 0, 128))
-                        screen.blit(background, (col * cell_size, row * cell_size))
+                        # Remove the green background since we're using gameboard.png
                         screen.blit(tile, (col * cell_size, row * cell_size))
 
                     if (row, col) in legal_moves:
@@ -460,7 +469,9 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                                 attack_icon = pygame.image.load("graphics/attack-done.png").convert_alpha()
                             else:
                                 attack_icon = pygame.image.load("graphics/attack-available.png").convert_alpha()
-                            screen.blit(attack_icon, (col * cell_size + 2, row * cell_size + cell_size - 17))
+                            # Scale to 80x80 and position to align with the unit tile
+                            attack_icon = pygame.transform.scale(attack_icon, (80, 80))
+                            screen.blit(attack_icon, (col * cell_size, row * cell_size))
                         except FileNotFoundError:
                             # Fallback to colored squares if images not found
                             attack_indicator = pygame.Surface((15, 15))
@@ -478,7 +489,9 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                                 move_icon = pygame.image.load("graphics/move-done.png").convert_alpha()
                             else:
                                 move_icon = pygame.image.load("graphics/move-available.png").convert_alpha()
-                            screen.blit(move_icon, (col * cell_size + cell_size - 17, row * cell_size + cell_size - 17))
+                            # Scale to 80x80 and position to align with the unit tile
+                            move_icon = pygame.transform.scale(move_icon, (80, 80))
+                            screen.blit(move_icon, (col * cell_size, row * cell_size))
                         except FileNotFoundError:
                             # Fallback to colored squares if images not found
                             move_indicator = pygame.Surface((15, 15))
@@ -542,14 +555,24 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
 
             if selected_unit:
                 unit_name_text = font.render(selected_unit.name, True, (255, 255, 255))
-                unit_stats_text = font.render(
-                    f"HP: {selected_unit.hp}  Range: {calculate_effective_range(selected_unit, game_map, unit_positions, ability_system)}",
-                    True,
+
+                # Create colored text for stats - labels in 66% gray (168, 168, 168), values in white
+                hp_label = font.render("hp: ", True, (168, 168, 168))
+                hp_value = font.render(str(selected_unit.hp), True, (255, 255, 255))
+                atk_label = font.render("  atk: ", True, (168, 168, 168))
+                atk_value = font.render(str(selected_unit.atk), True, (255, 255, 255))
+                range_label = font.render("  range: ", True, (168, 168, 168))
+                range_value = font.render(
+                    str(calculate_effective_range(selected_unit, game_map, unit_positions, ability_system)), True,
                     (255, 255, 255))
-                unit_move_text = font.render(f"Moves: {selected_unit.moves_remaining}/{selected_unit.move}", True,
-                                             (255, 255, 255))
-                unit_attack_text = font.render(f"Attacked: {'Yes' if selected_unit.has_attacked else 'No'}", True,
-                                               (255, 0, 0) if selected_unit.has_attacked else (0, 255, 0))
+
+                moves_label = font.render("moves: ", True, (168, 168, 168))
+                moves_value = font.render(f"{selected_unit.moves_remaining}/{selected_unit.move}", True,
+                                          (255, 255, 255))
+
+                attacked_label = font.render("attacked: ", True, (168, 168, 168))
+                attacked_value = font.render('yes' if selected_unit.has_attacked else 'no', True,
+                                             (255, 0, 0) if selected_unit.has_attacked else (0, 255, 0))
 
                 # Show available abilities with better messaging
                 available_abilities = ability_system.get_available_active_abilities(selected_unit, game_map,
@@ -558,16 +581,18 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                     0] if " - " in selected_unit.special else selected_unit.special
 
                 if available_abilities:
-                    ability_text = f"Ability: {ability_name}"
+                    ability_label = small_font.render("ability: ", True, (168, 168, 168))
+                    ability_value = small_font.render(ability_name, True, (255, 255, 255))
                 else:
                     # Check if unit has an ability but can't use it right now
                     ability_info = ability_system.get_ability_info(ability_name)
                     if ability_info and ability_system.is_active_ability(ability_name):
-                        ability_text = f"Ability: {ability_name} (not currently usable)"
+                        ability_label = small_font.render("ability: ", True, (168, 168, 168))
+                        ability_value = small_font.render(f"{ability_name} (not currently usable)", True,
+                                                          (128, 128, 128))
                     else:
-                        ability_text = f"Ability: {ability_name} (passive)"
-
-                unit_ability_text = small_font.render(ability_text, True, (255, 255, 255))
+                        ability_label = small_font.render("ability: ", True, (168, 168, 168))
+                        ability_value = small_font.render(f"{ability_name} (passive)", True, (255, 255, 255))
 
                 faction = selected_unit.faction.replace(" ", "_")
                 unit_icon_path = f"graphics/{faction}/{selected_unit.unit_class.lower()}.png"
@@ -582,10 +607,42 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                 screen.blit(unit_icon, (panel_x + 10, panel_y + 15))
 
                 screen.blit(unit_name_text, (panel_x + 70, panel_y + 10))
-                screen.blit(unit_stats_text, (panel_x + 70, panel_y + 35))
-                screen.blit(unit_move_text, (panel_x + 70, panel_y + 60))
-                screen.blit(unit_attack_text, (panel_x + 70, panel_y + 85))
-                screen.blit(unit_ability_text, (panel_x + 70, panel_y + 110))
+
+                # Draw stats line with colored labels and values
+                stats_y = panel_y + 35
+                current_x = panel_x + 70
+                screen.blit(hp_label, (current_x, stats_y))
+                current_x += hp_label.get_width()
+                screen.blit(hp_value, (current_x, stats_y))
+                current_x += hp_value.get_width()
+                screen.blit(atk_label, (current_x, stats_y))
+                current_x += atk_label.get_width()
+                screen.blit(atk_value, (current_x, stats_y))
+                current_x += atk_value.get_width()
+                screen.blit(range_label, (current_x, stats_y))
+                current_x += range_label.get_width()
+                screen.blit(range_value, (current_x, stats_y))
+
+                # Draw moves line with colored labels and values
+                moves_y = panel_y + 60
+                current_x = panel_x + 70
+                screen.blit(moves_label, (current_x, moves_y))
+                current_x += moves_label.get_width()
+                screen.blit(moves_value, (current_x, moves_y))
+
+                # Draw attacked line with colored labels and values
+                attacked_y = panel_y + 85
+                current_x = panel_x + 70
+                screen.blit(attacked_label, (current_x, attacked_y))
+                current_x += attacked_label.get_width()
+                screen.blit(attacked_value, (current_x, attacked_y))
+
+                # Draw ability line with colored labels and values
+                ability_y = panel_y + 110
+                current_x = panel_x + 70
+                screen.blit(ability_label, (current_x, ability_y))
+                current_x += ability_label.get_width()
+                screen.blit(ability_value, (current_x, ability_y))
             else:
                 no_unit_text = font.render("No unit selected", True, (255, 255, 255))
                 screen.blit(no_unit_text, (panel_x + 10, panel_y + 10))
@@ -881,7 +938,8 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                     if target_unit:
                         effective_range = calculate_effective_range(target_unit, game_map, unit_positions,
                                                                     ability_system)
-                        tooltip_lines.append(f"{target_unit.name} (HP: {target_unit.hp}, Range: {effective_range})")
+                        tooltip_lines.append(
+                            f"{target_unit.name} (HP: {target_unit.hp}, ATK: {target_unit.atk}, Range: {effective_range})")
 
                         # Add effects if target has any
                         if effects_system.has_any_effects(target_unit.unit_id):
@@ -947,7 +1005,7 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                 if unit.position == hover_pos:
                     # Show unit info with effects merged in
                     effective_range = calculate_effective_range(unit, game_map, unit_positions, ability_system)
-                    tooltip_lines = [f"{unit.name} (HP: {unit.hp}, Range: {effective_range})"]
+                    tooltip_lines = [f"{unit.name} (HP: {unit.hp}, ATK: {unit.atk}, Range: {effective_range})"]
 
                     # Add effects if unit has any
                     if effects_system.has_any_effects(unit.unit_id):
