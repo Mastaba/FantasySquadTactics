@@ -273,10 +273,13 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
         except FileNotFoundError:
             selected_unit_icon = None  # Fallback to green circle if image not found
 
-        try:
-            blessed_icon = pygame.image.load('graphics/blessed.png').convert_alpha()
-        except FileNotFoundError:
-            blessed_icon = None  # Fallback to yellow dot if image not found
+        # Load effect indicator graphics
+        effect_icons = {}
+        for i in range(1, 4):  # Load has-1-effect.png through has-3-effect.png
+            try:
+                effect_icons[i] = pygame.image.load(f'graphics/has-{i}-effect.png').convert_alpha()
+            except FileNotFoundError:
+                effect_icons[i] = None
 
         font = pygame.font.Font('IMFellEnglishSC-Regular.ttf', 24)
         small_font = pygame.font.Font('IMFellEnglishSC-Regular.ttf', 18)
@@ -487,10 +490,14 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                             screen.blit(move_indicator,
                                         (col * cell_size + cell_size - 17, row * cell_size + cell_size - 17))
 
-                    # Draw effects indicator - blessed.png overlay if unit has any effects
+                    # Draw effects indicator - use appropriate effect graphic based on number of effects
                     if effects_system.has_any_effects(piece.unit_id):
-                        if blessed_icon:
-                            screen.blit(blessed_icon, (col * cell_size, row * cell_size))
+                        effect_count = len(effects_system.get_all_effects(piece.unit_id))
+                        # Cap at 3 effects for graphics (use has-3-effect.png for 3+ effects)
+                        effect_level = min(effect_count, 3)
+
+                        if effect_icons.get(effect_level):
+                            screen.blit(effect_icons[effect_level], (col * cell_size, row * cell_size))
                         else:
                             # Fallback to yellow dot if image not found
                             pygame.draw.circle(screen, (255, 255, 0),
@@ -590,79 +597,91 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                                                                                 unit_positions) if selected_unit else []
             can_use_ability = len(available_abilities) > 0
 
-            # Buttons
-            end_button = pygame.Rect(width - 240, game_map.shape[0] * cell_size + 65, 100, 50)
+            # Buttons repositioned - moved back 75px left with 15px spacing (reduced from 35px)
+            # Move button with graphics
+            move_button = pygame.Rect(width - 435, game_map.shape[0] * cell_size + 65, 100, 50)
+            try:
+                if can_move and mode == "move":
+                    move_button_img = pygame.image.load('graphics/button-move.png').convert_alpha()
+                elif can_move:
+                    move_button_img = pygame.image.load('graphics/button-move.png').convert_alpha()
+                else:
+                    move_button_img = pygame.image.load('graphics/button-move-faded.png').convert_alpha()
+
+                move_button_img = pygame.transform.scale(move_button_img, (100, 50))
+                screen.blit(move_button_img, (width - 435, game_map.shape[0] * cell_size + 65))
+            except FileNotFoundError:
+                # Fallback to original colored rectangles if images not found
+                move_color = (31, 150, 80) if mode == "move" else (50, 50, 50)
+                move_button_surface = pygame.Surface((100, 50))
+                move_button_surface.fill(move_color)
+                if not can_move and selected_unit:
+                    move_button_surface.set_alpha(64)
+                screen.blit(move_button_surface, (width - 435, game_map.shape[0] * cell_size + 65))
+                pygame.draw.rect(screen, (200, 200, 200), move_button, 2)
+                move_text = font.render("Move", True, (255, 255, 255))
+                screen.blit(move_text, (width - 425, game_map.shape[0] * cell_size + 80))
+
+            # Attack button with graphics
+            attack_button = pygame.Rect(width - 320, game_map.shape[0] * cell_size + 65, 100, 50)
+            try:
+                if can_attack and mode == "attack":
+                    attack_button_img = pygame.image.load('graphics/button-attack.png').convert_alpha()
+                elif can_attack:
+                    attack_button_img = pygame.image.load('graphics/button-attack.png').convert_alpha()
+                else:
+                    attack_button_img = pygame.image.load('graphics/button-attack-faded.png').convert_alpha()
+
+                attack_button_img = pygame.transform.scale(attack_button_img, (100, 50))
+                screen.blit(attack_button_img, (width - 320, game_map.shape[0] * cell_size + 65))
+            except FileNotFoundError:
+                # Fallback to original colored rectangles if images not found
+                attack_color = (200, 0, 0) if mode == "attack" else (50, 50, 50)
+                attack_button_surface = pygame.Surface((100, 50))
+                attack_button_surface.fill(attack_color)
+                if not can_attack and selected_unit:
+                    attack_button_surface.set_alpha(64)
+                screen.blit(attack_button_surface, (width - 320, game_map.shape[0] * cell_size + 65))
+                pygame.draw.rect(screen, (200, 200, 200), attack_button, 2)
+                attack_text = font.render("Attack", True, (255, 255, 255))
+                screen.blit(attack_text, (width - 310, game_map.shape[0] * cell_size + 80))
+
+            # Special button with graphics (renamed from ability)
+            ability_button = pygame.Rect(width - 205, game_map.shape[0] * cell_size + 65, 100, 50)
+            try:
+                if can_use_ability and mode == "ability":
+                    special_button_img = pygame.image.load('graphics/button-special.png').convert_alpha()
+                elif can_use_ability:
+                    special_button_img = pygame.image.load('graphics/button-special.png').convert_alpha()
+                else:
+                    special_button_img = pygame.image.load('graphics/button-special-faded.png').convert_alpha()
+
+                special_button_img = pygame.transform.scale(special_button_img, (100, 50))
+                screen.blit(special_button_img, (width - 205, game_map.shape[0] * cell_size + 65))
+            except FileNotFoundError:
+                # Fallback to original colored rectangles if images not found
+                ability_color = (128, 0, 255) if mode == "ability" else (50, 50, 50)
+                ability_button_surface = pygame.Surface((100, 50))
+                ability_button_surface.fill(ability_color)
+                if not can_use_ability and selected_unit:
+                    ability_button_surface.set_alpha(64)
+                screen.blit(ability_button_surface, (width - 205, game_map.shape[0] * cell_size + 65))
+                pygame.draw.rect(screen, (200, 200, 200), ability_button, 2)
+                ability_text = font.render("Special", True, (255, 255, 255))
+                screen.blit(ability_text, (width - 195, game_map.shape[0] * cell_size + 80))
+
+            # End Turn button moved to next line
+            end_button = pygame.Rect(width - 240, game_map.shape[0] * cell_size + 125, 100, 50)
             pygame.draw.rect(screen, (200, 0, 0), end_button)
             end_text = font.render("End Turn", True, (255, 255, 255))
-            screen.blit(end_text, (width - 230, game_map.shape[0] * cell_size + 80))
+            screen.blit(end_text, (width - 230, game_map.shape[0] * cell_size + 140))
 
-            reset_button = pygame.Rect(width - 120, game_map.shape[0] * cell_size + 65, 100, 50)
+            # Reset button moved to upper left corner (tiny)
+            reset_button = pygame.Rect(10, 10, 50, 25)
             pygame.draw.rect(screen, (0, 0, 200), reset_button)
-            reset_text = font.render("Reset", True, (255, 255, 255))
-            screen.blit(reset_text, (width - 110, game_map.shape[0] * cell_size + 80))
-
-            # Move button with opacity based on availability
-            move_button = pygame.Rect(width - 560, game_map.shape[0] * cell_size + 65, 100, 50)
-            move_color = (31, 150, 80) if mode == "move" else (50, 50, 50)
-
-            move_button_surface = pygame.Surface((100, 50))
-            move_button_surface.fill(move_color)
-
-            if not can_move and selected_unit:
-                move_button_surface.set_alpha(64)
-
-            screen.blit(move_button_surface, (width - 560, game_map.shape[0] * cell_size + 65))
-            pygame.draw.rect(screen, (200, 200, 200), move_button, 2)
-
-            move_text = font.render("Move", True, (255, 255, 255))
-            move_text_surface = move_text.copy()
-
-            if not can_move and selected_unit:
-                move_text_surface.set_alpha(64)
-
-            screen.blit(move_text_surface, (width - 550, game_map.shape[0] * cell_size + 80))
-
-            # Attack button with opacity based on availability
-            attack_button = pygame.Rect(width - 460, game_map.shape[0] * cell_size + 65, 100, 50)
-            attack_color = (200, 0, 0) if mode == "attack" else (50, 50, 50)
-
-            attack_button_surface = pygame.Surface((100, 50))
-            attack_button_surface.fill(attack_color)
-
-            if not can_attack and selected_unit:
-                attack_button_surface.set_alpha(64)
-
-            screen.blit(attack_button_surface, (width - 460, game_map.shape[0] * cell_size + 65))
-            pygame.draw.rect(screen, (200, 200, 200), attack_button, 2)
-
-            attack_text = font.render("Attack", True, (255, 255, 255))
-            attack_text_surface = attack_text.copy()
-
-            if not can_attack and selected_unit:
-                attack_text_surface.set_alpha(64)
-
-            screen.blit(attack_text_surface, (width - 450, game_map.shape[0] * cell_size + 80))
-
-            # Ability button with opacity based on availability
-            ability_button = pygame.Rect(width - 360, game_map.shape[0] * cell_size + 65, 100, 50)
-            ability_color = (128, 0, 255) if mode == "ability" else (50, 50, 50)
-
-            ability_button_surface = pygame.Surface((100, 50))
-            ability_button_surface.fill(ability_color)
-
-            if not can_use_ability and selected_unit:
-                ability_button_surface.set_alpha(64)
-
-            screen.blit(ability_button_surface, (width - 360, game_map.shape[0] * cell_size + 65))
-            pygame.draw.rect(screen, (200, 200, 200), ability_button, 2)
-
-            ability_text = font.render("Ability", True, (255, 255, 255))
-            ability_text_surface = ability_text.copy()
-
-            if not can_use_ability and selected_unit:
-                ability_text_surface.set_alpha(64)
-
-            screen.blit(ability_text_surface, (width - 350, game_map.shape[0] * cell_size + 80))
+            tiny_font = pygame.font.Font('IMFellEnglishSC-Regular.ttf', 12)
+            reset_text = tiny_font.render("Reset", True, (255, 255, 255))
+            screen.blit(reset_text, (15, 15))
 
             # Display results if available
             message_y = game_map.shape[0] * cell_size + 45
@@ -712,7 +731,6 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                             selected_unit, ability_name, target_pos, game_map, unit_positions
                         )
                         attack_message_timer = 180
-                        print(f"Ability result: {last_ability_result}")
 
                         # Refresh legal targets after ability use
                         available_abilities = ability_system.get_available_active_abilities(selected_unit, game_map,
@@ -725,7 +743,7 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                             legal_ability_targets = set()
 
                 except Exception as e:
-                    print(f"Ability error: {e}")
+                    pass
                 return
 
             # Check if clicking on a friendly unit (unit selection has priority over other actions)
@@ -967,10 +985,8 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
             draw_map()
             end_button, reset_button, move_button, attack_button, ability_button, can_move, can_attack, can_use_ability = draw_ui()
 
-            # ABILITY DESCRIPTION - DIRECTLY IN MAIN LOOP SINCE draw_ui() ISN'T WORKING
+            # ABILITY DESCRIPTION - Show ability description for selected unit
             if selected_unit:
-                print(f"Drawing description for {selected_unit.name}")
-
                 # Always show ability description, regardless of availability
                 ability_name = selected_unit.special.split(" - ")[
                     0] if " - " in selected_unit.special else selected_unit.special
@@ -981,8 +997,6 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                     ability_description = f"{ability_name}: {ability_info.get('description', selected_unit.special)}"
                 else:
                     ability_description = selected_unit.special
-
-                print(f"Description: {ability_description}")
 
                 # Draw ability description background
                 desc_lines = []
@@ -1003,8 +1017,6 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                 if current_line:
                     desc_lines.append(current_line)
 
-                print(f"Description lines: {desc_lines}")
-
                 # Calculate description height and position
                 desc_height = max(60, len(desc_lines) * 22 + 15)
                 ability_desc_y = game_map.shape[0] * cell_size + 200  # Position below UI
@@ -1018,7 +1030,6 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                     line_surface = small_font.render(line, True, (255, 255, 255))
                     text_y = ability_desc_y + 8 + i * 22
                     screen.blit(line_surface, (25, text_y))
-                    print(f"Drawing line {i}: '{line}' at y={text_y}")
 
             mouse_pos = pygame.mouse.get_pos()
             display_hover_info(mouse_pos)
@@ -1070,7 +1081,7 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
                         handle_click(event.pos)
 
     except Exception as e:
-        print(f"An error occurred: {e}")
+        pass
     finally:
         pygame.quit()
 
@@ -1099,7 +1110,6 @@ if __name__ == "__main__":
     terrain_map = generate_game_map(map_height, map_width, terrain_weights)
 
     unit_positions = place_units_on_map(terrain_map, army1, army2)
-    print("Initial Map:")
     render_combined_map(terrain_map, unit_positions)
 
     display_game_with_pygame(
