@@ -657,75 +657,39 @@ def display_game_with_pygame(game_map, unit_positions, faction_file, map_height,
             # Buttons repositioned - moved back 75px left with 15px spacing (reduced from 35px)
             # Move button with graphics
             move_button = pygame.Rect(width - 435, game_map.shape[0] * cell_size + 65, 100, 50)
-            try:
-                if can_move and mode == "move":
-                    move_button_img = pygame.image.load('graphics/button-move.png').convert_alpha()
-                elif can_move:
-                    move_button_img = pygame.image.load('graphics/button-move.png').convert_alpha()
-                else:
-                    move_button_img = pygame.image.load('graphics/button-move-faded.png').convert_alpha()
+            if can_move and mode == "move":
+                move_button_img = pygame.image.load('graphics/button-move-selected.png').convert_alpha()
+            elif can_move:
+                move_button_img = pygame.image.load('graphics/button-move.png').convert_alpha()
+            else:
+                move_button_img = pygame.image.load('graphics/button-move-faded.png').convert_alpha()
 
-                move_button_img = pygame.transform.scale(move_button_img, (100, 50))
-                screen.blit(move_button_img, (width - 435, game_map.shape[0] * cell_size + 65))
-            except FileNotFoundError:
-                # Fallback to original colored rectangles if images not found
-                move_color = (31, 150, 80) if mode == "move" else (50, 50, 50)
-                move_button_surface = pygame.Surface((100, 50))
-                move_button_surface.fill(move_color)
-                if not can_move and selected_unit:
-                    move_button_surface.set_alpha(64)
-                screen.blit(move_button_surface, (width - 435, game_map.shape[0] * cell_size + 65))
-                pygame.draw.rect(screen, (200, 200, 200), move_button, 2)
-                move_text = font.render("Move", True, (255, 255, 255))
-                screen.blit(move_text, (width - 425, game_map.shape[0] * cell_size + 80))
+            move_button_img = pygame.transform.scale(move_button_img, (100, 50))
+            screen.blit(move_button_img, (width - 435, game_map.shape[0] * cell_size + 65))
 
             # Attack button with graphics
             attack_button = pygame.Rect(width - 320, game_map.shape[0] * cell_size + 65, 100, 50)
-            try:
-                if can_attack and mode == "attack":
-                    attack_button_img = pygame.image.load('graphics/button-attack.png').convert_alpha()
-                elif can_attack:
-                    attack_button_img = pygame.image.load('graphics/button-attack.png').convert_alpha()
-                else:
-                    attack_button_img = pygame.image.load('graphics/button-attack-faded.png').convert_alpha()
+            if can_attack and mode == "attack":
+                attack_button_img = pygame.image.load('graphics/button-attack-selected.png').convert_alpha()
+            elif can_attack:
+                attack_button_img = pygame.image.load('graphics/button-attack.png').convert_alpha()
+            else:
+                attack_button_img = pygame.image.load('graphics/button-attack-faded.png').convert_alpha()
 
-                attack_button_img = pygame.transform.scale(attack_button_img, (100, 50))
-                screen.blit(attack_button_img, (width - 320, game_map.shape[0] * cell_size + 65))
-            except FileNotFoundError:
-                # Fallback to original colored rectangles if images not found
-                attack_color = (200, 0, 0) if mode == "attack" else (50, 50, 50)
-                attack_button_surface = pygame.Surface((100, 50))
-                attack_button_surface.fill(attack_color)
-                if not can_attack and selected_unit:
-                    attack_button_surface.set_alpha(64)
-                screen.blit(attack_button_surface, (width - 320, game_map.shape[0] * cell_size + 65))
-                pygame.draw.rect(screen, (200, 200, 200), attack_button, 2)
-                attack_text = font.render("Attack", True, (255, 255, 255))
-                screen.blit(attack_text, (width - 310, game_map.shape[0] * cell_size + 80))
+            attack_button_img = pygame.transform.scale(attack_button_img, (100, 50))
+            screen.blit(attack_button_img, (width - 320, game_map.shape[0] * cell_size + 65))
 
-            # Special button with graphics (renamed from ability)
+            # Special button with graphics
             ability_button = pygame.Rect(width - 205, game_map.shape[0] * cell_size + 65, 100, 50)
-            try:
-                if can_use_ability and mode == "ability":
-                    special_button_img = pygame.image.load('graphics/button-special.png').convert_alpha()
-                elif can_use_ability:
-                    special_button_img = pygame.image.load('graphics/button-special.png').convert_alpha()
-                else:
-                    special_button_img = pygame.image.load('graphics/button-special-faded.png').convert_alpha()
+            if can_use_ability and mode == "ability":
+                special_button_img = pygame.image.load('graphics/button-special-selected.png').convert_alpha()
+            elif can_use_ability:
+                special_button_img = pygame.image.load('graphics/button-special.png').convert_alpha()
+            else:
+                special_button_img = pygame.image.load('graphics/button-special-faded.png').convert_alpha()
 
-                special_button_img = pygame.transform.scale(special_button_img, (100, 50))
-                screen.blit(special_button_img, (width - 205, game_map.shape[0] * cell_size + 65))
-            except FileNotFoundError:
-                # Fallback to original colored rectangles if images not found
-                ability_color = (128, 0, 255) if mode == "ability" else (50, 50, 50)
-                ability_button_surface = pygame.Surface((100, 50))
-                ability_button_surface.fill(ability_color)
-                if not can_use_ability and selected_unit:
-                    ability_button_surface.set_alpha(64)
-                screen.blit(ability_button_surface, (width - 205, game_map.shape[0] * cell_size + 65))
-                pygame.draw.rect(screen, (200, 200, 200), ability_button, 2)
-                ability_text = font.render("Special", True, (255, 255, 255))
-                screen.blit(ability_text, (width - 195, game_map.shape[0] * cell_size + 80))
+            special_button_img = pygame.transform.scale(special_button_img, (100, 50))
+            screen.blit(special_button_img, (width - 205, game_map.shape[0] * cell_size + 65))
 
             # End Turn button moved to next line
             end_button = pygame.Rect(width - 240, game_map.shape[0] * cell_size + 125, 100, 50)
