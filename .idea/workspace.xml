@@ -4,15 +4,65 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5b2a07ae-3c8c-4e41-980e-03d36d7318b3" name="Changes" comment="special abilities added">
-      <change afterPath="$PROJECT_DIR$/attack-available.afdesign" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/attack-done.afdesign" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/graphics/attack-available.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/graphics/attack-done.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/graphics/move-done.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/move-done.afdesign" afterDir="false" />
+    <list default="true" id="5b2a07ae-3c8c-4e41-980e-03d36d7318b3" name="Changes" comment="button selection indicator">
+      <change afterPath="$PROJECT_DIR$/dist/graphics/button-attack-faded.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/graphics/button-attack-selected.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/graphics/button-attack.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/graphics/button-move-faded.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/graphics/button-move-selected.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/graphics/button-move.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/graphics/button-special-faded.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/graphics/button-special-selected.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/graphics/button-special.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/graphics/gameboard.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/graphics/has-1-effect.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/graphics/has-2-effect.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/graphics/has-3-effect.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/graphics/Screenshot 2025-07-30 124902.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/main/Analysis-00.toc" beforeDir="false" afterPath="$PROJECT_DIR$/build/main/Analysis-00.toc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/main/EXE-00.toc" beforeDir="false" afterPath="$PROJECT_DIR$/build/main/EXE-00.toc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/main/PKG-00.toc" beforeDir="false" afterPath="$PROJECT_DIR$/build/main/PKG-00.toc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/main/main.pkg" beforeDir="false" afterPath="$PROJECT_DIR$/build/main/main.pkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/FST.zip" beforeDir="false" afterPath="$PROJECT_DIR$/dist/FST.zip" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/City.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/City.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Elven_Alliance_of_Eldanor/artillery.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Elven_Alliance_of_Eldanor/artillery.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Elven_Alliance_of_Eldanor/heavy.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Elven_Alliance_of_Eldanor/heavy.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Elven_Alliance_of_Eldanor/leader.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Elven_Alliance_of_Eldanor/leader.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Elven_Alliance_of_Eldanor/melee.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Elven_Alliance_of_Eldanor/melee.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Elven_Alliance_of_Eldanor/ranger.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Elven_Alliance_of_Eldanor/ranger.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Elven_Alliance_of_Eldanor/scout.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Elven_Alliance_of_Eldanor/scout.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Fae_Armies_of_the_Forest_Lords/artillery.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Fae_Armies_of_the_Forest_Lords/artillery.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Fae_Armies_of_the_Forest_Lords/heavy.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Fae_Armies_of_the_Forest_Lords/heavy.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Fae_Armies_of_the_Forest_Lords/leader.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Fae_Armies_of_the_Forest_Lords/leader.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Fae_Armies_of_the_Forest_Lords/melee.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Fae_Armies_of_the_Forest_Lords/melee.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Fae_Armies_of_the_Forest_Lords/ranger.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Fae_Armies_of_the_Forest_Lords/ranger.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Fae_Armies_of_the_Forest_Lords/scout.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Fae_Armies_of_the_Forest_Lords/scout.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Farm.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Farm.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Forest.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Forest.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Kingdom_of_Cantrell/artillery.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Kingdom_of_Cantrell/artillery.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Kingdom_of_Cantrell/heavy.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Kingdom_of_Cantrell/heavy.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Kingdom_of_Cantrell/leader.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Kingdom_of_Cantrell/leader.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Kingdom_of_Cantrell/melee.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Kingdom_of_Cantrell/melee.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Kingdom_of_Cantrell/ranger.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Kingdom_of_Cantrell/ranger.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Kingdom_of_Cantrell/scout.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Kingdom_of_Cantrell/scout.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Lake.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Lake.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Mountain.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Mountain.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/artillery.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/artillery.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/heavy.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/heavy.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/leader.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/leader.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/melee.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/melee.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/ranger.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/ranger.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/scout.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Orc,_Goblin,_Ogre,_and_Troll_Hordes/scout.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Plains.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Plains.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/River.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/River.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/Village.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/Village.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/attack-available.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/attack-available.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/attack-done.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/attack-done.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/move-available.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/move-available.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/move-done.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/move-done.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/graphics/tileset.png" beforeDir="false" afterPath="$PROJECT_DIR$/dist/graphics/tileset.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/main.exe" beforeDir="false" afterPath="$PROJECT_DIR$/dist/main.exe" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -56,6 +106,11 @@
     ]
   }
 }</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="E:\dev\FantasySquadTactics\graphics" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="FantasySquadTactics" />
@@ -176,7 +231,39 @@
       <option name="project" value="LOCAL" />
       <updated>1752612894350</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="so much added i dont even knwo">
+      <option name="closed" value="true" />
+      <created>1752693808286</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1752693808286</updated>
+    </task>
+    <task id="LOCAL-00012" summary="so much more everything">
+      <option name="closed" value="true" />
+      <created>1752714751069</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1752714751069</updated>
+    </task>
+    <task id="LOCAL-00013" summary="so much more everything">
+      <option name="closed" value="true" />
+      <created>1752725266035</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1752725266035</updated>
+    </task>
+    <task id="LOCAL-00014" summary="button selection indicator">
+      <option name="closed" value="true" />
+      <created>1752772045196</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1752772045196</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -188,6 +275,9 @@
     <MESSAGE value="fix" />
     <MESSAGE value="attacking toggle added" />
     <MESSAGE value="special abilities added" />
-    <option name="LAST_COMMIT_MESSAGE" value="special abilities added" />
+    <MESSAGE value="so much added i dont even knwo" />
+    <MESSAGE value="so much more everything" />
+    <MESSAGE value="button selection indicator" />
+    <option name="LAST_COMMIT_MESSAGE" value="button selection indicator" />
   </component>
 </project>
